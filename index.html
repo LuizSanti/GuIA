@@ -3,9 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GuIA</title>
+    <title>GuIA - Inteligência Documental</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link rel="stylesheet" href="src/assets/css/style.css">
+    <link rel="stylesheet" href="src/assets/css/upload.css">
 </head>
 <body>
-    <h1>Guia - Assistente</h1>
+
+    <nav class="menu">
+        <div>
+            <a href="javascript:showScreen('upload')" class="logo">
+                <img src="src/assets/images/logo-guia.png" alt="GuIA Logo" class="logo-img">
+                <span class="logo-text">GuIA</span>
+            </a>
+
+            <div class="geral">
+                <h2>Visão geral</h2>
+                <ul>
+                    <li>
+                        <a href="javascript:showScreen('upload')" class="active" id="nav-upload">
+                            <span class="material-symbols-outlined">upload_file</span>
+                            <span class="nav-label">Novo Documento</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span class="material-symbols-outlined">history</span>
+                            <span class="nav-label">Histórico</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span class="material-symbols-outlined">settings</span>
+                            <span class="nav-label">Configurações</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="conta">
+            <h2>Conta</h2>
+            <ul>
+                <li>
+                    <a href="#">
+                        <span class="material-symbols-outlined">account_circle</span>
+                        <span class="nav-label">Perfil</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <div class="content-area">
+            
+            <div id="screen-upload" class="screen-container">
+                <div class="card">
+                    <div class="upload-zone" id="uploadZone">
+                        <input type="file" id="fileInput" accept=".pdf,.txt">
+                        <div class="cloud-icon">
+                            <img src="src/assets/images/logo-guia.png" alt="Upload" class="upload-logo-img">
+                        </div>
+
+                        <div class="upload-actions" id="uploadActions">
+                            <button class="btn-select" id="btnSelect">
+                                Selecione Arquivo
+                            </button>
+                            <button class="btn-dropdown" id="dropdownToggle">
+                                <span class="material-symbols-outlined">keyboard_arrow_down</span>
+                            </button>
+                            <div class="dropdown-menu" id="dropdownMenu">
+                                <button data-type="pdf">
+                                    <span class="material-symbols-outlined">picture_as_pdf</span>
+                                    PDF
+                                </button>
+                                <button data-type="txt">
+                                    <span class="material-symbols-outlined">text_snippet</span>
+                                    Arquivo TXT
+                                </button>
+                            </div>
+                        </div>
+
+                        <p class="upload-hint" id="uploadHint">ou arraste e solte seu PDF ou TXT aqui</p>
+                    </div>
+
+                    <div class="actions-section">
+                        <span class="actions-label">O que faremos?</span>
+                        <div class="action-buttons">
+                            <button class="btn-action" data-action="resumo" onclick="showScreen('processing')">
+                                <span class="material-symbols-outlined">summarize</span>
+                                Resumir Texto
+                            </button>
+                            <button class="btn-action" data-action="pontos" onclick="showScreen('processing')">
+                                <span class="material-symbols-outlined">format_list_bulleted</span>
+                                Extrair Pontos-Chave
+                            </button>
+                            <button class="btn-action" data-action="quiz" onclick="showScreen('processing')">
+                                <span class="material-symbols-outlined">quiz</span>
+                                Gerar Quiz
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="screen-processing" class="screen-container" style="display: none;">
+                <div class="card card-split">
+                    <div class="card-content">
+                        <div class="status-header">
+                            <img src="src/assets/images/arquivo-analise.png" alt="">
+                        </div>
+                        <div class="progress-info">
+                            <span class="progress-percent">75% completo</span>
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width: 75%;"></div>
+                            </div>
+                            <p class="status-text">Analisando <strong>documento_vidal.pdf</strong>...</p>
+                            <p class="helper-text">Aguarde um momento... a GuIA está analisando o documento. Isso pode levar alguns minutos.</p>
+                        </div>
+                        <button class="btn-action btn-dark" disabled>
+                            <span class="material-symbols-outlined">summarize</span>
+                            Resumir Texto
+                        </button>
+                    </div>
+                    <div class="document-preview">
+                        <div class="preview-skeleton">
+                            <div class="skeleton-title">TITULO DO TEXTO</div>
+                            <div class="skeleton-line">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam eu turpis molestie, dictum est a, mattis tellus.</div>
+                            <div class="skeleton-line">Sed dignissim, metus nec fringilla accumsan, risus sem. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+                            <div class="skeleton-line">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam eu turpis molestie, dictum est a, mattis tellus.</div>
+                            <div class="skeleton-line">Sed dignissim, metus nec fringilla accumsan, risus sem. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+                        </div>
+                        <div class="preview-overlay">
+                            <span class="material-symbols-outlined spin">sync</span>
+                            <span>Processando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="screen-error" class="screen-container" style="display: none;">
+                <div class="card card-center">
+                    <div class="error-header">
+                        <img src="src/assets/images/arquivo-erro.png" alt=""></a>
+                    </div>
+                    <h1 class="error-title">FALHA NO PROCESSAMENTO</h1>
+                    <div class="error-body">
+                        <p>Infelizmente, ocorreu um erro durante o processamento do seu arquivo.</p>
+                        <p class="helper-text">Arquivo corrompido ou formato inválido. Verifique o arquivo.</p>
+                    </div>
+                    <div class="error-footer">
+                        <button class="btn-action" onclick="showScreen('upload')">TENTAR NOVAMENTE</button>
+                        <button class="btn-outline" onclick="showScreen('upload')">VOLTAR PARA O INÍCIO</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="screen-results" class="screen-container" style="display: none;">
+                <div class="card results-layout">
+                    <section class="results-content">
+                        <h1 class="section-title">RESULTADOS</h1>
+                        <div class="text-output">
+                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam eu turpis molestie, dictum est a, mattis tellus.</p>
+                            <ul class="bullet-list">
+                                <li>Sed dignissim, metus nec fringilla accumsan, risus sem.</li>
+                                <li>sollicitudin lacus, ut interdum tellus elit sed risus.</li>
+                                <li>Maecenas eget condimentum velit, sit amet feugiat lectus.</li>
+                            </ul>
+                            
+                            <h2 class="sub-title">LOREM IPSUM</h2>
+                            <ul class="bullet-list">
+                                <li>Sed dignissim, metus nec fringilla accumsan, risus sem.</li>
+                                <li>sollicitudin lacus, ut interdum tellus elit sed risus.</li>
+                            </ul>
+                        </div>
+                    </section>
+                    <aside class="results-sidebar">
+                        <h3 class="sidebar-title">Ações de Exportação</h3>
+                        <div class="actions-stack">
+                            <button class="btn-action btn-danger">
+                                BAIXAR RESUMO.PDF
+                                <span class="material-symbols-outlined">download</span>
+                            </button>
+                            <button class="btn-action">GERAR QUIZ</button>
+                            <button class="btn-action">EXTRAIR PONTOS-CHAVE</button>
+                            <button class="btn-action">GERAR QUESTIONÁRIO</button>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+
+            <div class="prompt-bar">
+                <input type="text" placeholder="Deixe a GuIA te levar..." id="promptInput">
+                <button class="btn-mic" id="micBtn" title="Falar com a GuIA">
+                    <span class="material-symbols-outlined">mic</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script src="src/assets/js/index.js"></script>
+    <script src="src/assets/js/upload.js"></script>
 </body>
 </html>
