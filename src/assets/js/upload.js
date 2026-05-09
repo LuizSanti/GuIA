@@ -2,7 +2,7 @@
 // Gerencia a zona de upload: seleção, drag-and-drop, validação, leitura e preview do arquivo.
 // Regras de validação:
 //  - Tipos permitidos: PDF e TXT (verificação dupla: MIME + extensão)
-//  - Tamanho máximo: 500 MB
+//   - Tamanho máximo: 500 MB
 
 'use strict';
  
