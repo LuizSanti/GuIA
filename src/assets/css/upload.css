@@ -1,0 +1,217 @@
+/* ==========================================================================
+   ZONA DE UPLOAD
+   ========================================================================== */
+/* Drag-over: arquivo sendo arrastado sobre a zona */
+.upload-zone.drag-over {
+    border-style: solid;
+    border-color: var(--teal-light);
+    background: rgba(42, 124, 118, 0.06);
+    transform: scale(1.01);
+    transition: border-color 0.2s, background 0.2s, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+ 
+.upload-zone.drag-over .upload-logo-img {
+    animation: float-icon 0.7s ease-in-out infinite alternate;
+}
+ 
+@keyframes float-icon {
+    from { transform: translateY(0);    }
+    to   { transform: translateY(-8px); }
+}
+ 
+/* Erro de validação */
+.upload-zone.upload-zone--error {
+    border-style: dashed;
+    border-color: var(--danger);
+    background: rgba(239, 68, 68, 0.04);
+}
+ 
+/* Arquivo válido carregado */
+.upload-zone.has-file {
+    padding: 28px 32px;
+    border-style: solid;
+    border-color: var(--teal);
+    background: rgba(42, 124, 118, 0.04);
+    cursor: default;
+    min-height: unset;
+}
+ 
+/* FileReader em andamento */
+.upload-zone.uploading {
+    pointer-events: none;
+    opacity: 0.65;
+}
+ 
+.upload-zone.uploading::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--teal);
+    animation: progress-bar 1.4s ease-in-out infinite;
+}
+ 
+@keyframes progress-bar {
+    0%   { left: -30%; width: 30%; }
+    60%  { left: 70%;  width: 30%; }
+    100% { left: 100%; width: 0%;  }
+}
+ 
+/* ==========================================================================
+   MENSAGEM DE ERRO DE VALIDAÇÃO
+   ========================================================================== */
+ 
+.upload-error-msg {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(239, 68, 68, 0.06);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    color: var(--danger);
+    font-size: 13px;
+    line-height: 1.4;
+    width: 100%;
+    text-align: left;
+    animation: slide-in 0.2s ease both;
+}
+ 
+.upload-error-msg .material-symbols-outlined {
+    font-size: 17px;
+    color: var(--danger);
+    flex-shrink: 0;
+}
+ 
+@keyframes slide-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0);   }
+}
+ 
+/* ==========================================================================
+   CARD DO ARQUIVO ACEITO (.file-card)
+   ========================================================================== */
+ 
+.file-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    animation: slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+ 
+/* Badge de tipo (PDF / TXT) */
+.file-card__badge {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 52px;
+    height: 52px;
+    border-radius: 8px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: #f0f2f5;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+}
+ 
+.file-card__badge .material-symbols-outlined {
+    font-size: 20px;
+    color: var(--text-muted);
+}
+ 
+/* PDF → teal */
+.file-card__badge--pdf {
+    background: rgba(42, 124, 118, 0.08);
+    border-color: rgba(42, 124, 118, 0.3);
+    color: var(--teal-dark);
+}
+ 
+.file-card__badge--pdf .material-symbols-outlined {
+    color: var(--teal);
+}
+ 
+/* TXT → azul-acinzentado */
+.file-card__badge--txt {
+    background: rgba(71, 85, 105, 0.08);
+    border-color: rgba(71, 85, 105, 0.25);
+    color: #475569;
+}
+ 
+.file-card__badge--txt .material-symbols-outlined {
+    color: #64748b;
+}
+ 
+/* Informações do arquivo */
+.file-card__info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+ 
+.file-card__name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+ 
+.file-card__size {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+ 
+/* Botão remover (×) */
+.file-card__remove {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+ 
+.file-card__remove .material-symbols-outlined {
+    font-size: 17px;
+    color: inherit;
+}
+ 
+.file-card__remove:hover {
+    background: rgba(239, 68, 68, 0.08);
+    color: var(--danger);
+    transform: scale(1.1);
+}
+ 
+.file-card__remove:active {
+    transform: scale(0.95);
+}
+ 
+/* ==========================================================================
+   BOTÕES DE AÇÃO — ESTADO DESABILITADO
+   ========================================================================== */
+ 
+.btn-action--disabled,
+.btn-action:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+    transform: none !important;
+    box-shadow: none !important;
+}
