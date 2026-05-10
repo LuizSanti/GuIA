@@ -317,5 +317,43 @@ document.addEventListener('DOMContentLoaded', () => {
  
 // ─── Expõe estado globalmente para outros módulos ─────────────────────────────
  
-window.GuIA             = window.GuIA || {};
+window.GuIA = window.GuIA || {};
 window.GuIA.uploadState = appState;
+
+// Gerencia o evento de upload, extração de texto e atualização da interface
+document.addEventListener('DOMContentLoaded', () => {
+    const fileInput = document.getElementById('fileInput');
+    const uploadZone = document.querySelector('.upload-zone');
+    const fileNameDisplay = document.querySelector('.file-card__name');
+    const fileSizeDisplay = document.querySelector('.file-card__size');
+
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // 1. Validação básica (pode ser expandida com as regras do validateFile)
+        uploadZone.classList.add('uploading');
+        uploadZone.classList.remove('upload-zone--error', 'has-file');
+
+        try {
+            // 2. Extração de texto usando a função do extractor.js
+            const texto = await extrairTextoDeArquivo(file);
+
+            // 3. Atualiza o estado global para que outras telas possam acessar
+            uploadZone.classList.remove('uploading');
+            uploadZone.classList.add('has-file');
+
+            // Atualiza o estado global
+            if(fileNameDisplay) fileNameDisplay.textContent = file.name;
+            if(fileSizeDisplay) fileSizeDisplay.textContent = (file.size / 1024).toFixed(1) + ' KB';
+
+        } catch (erro) {
+            // Em caso de erro, mostra mensagem e mantém o usuário na tela de upload
+            uploadZone.classList.remove('uploading');
+            uploadZone.classList.add('upload-zone--error');
+            
+            // Exibe mensagem de erro clara para o usuário
+            alert("⚠️ " + erro.message); 
+        }
+    });
+});
