@@ -606,6 +606,24 @@ main {
     font-size: 15px;
     line-height: 1.6;
     color: var(--text);
+    max-height: calc(100vh - 260px);
+    overflow-y: auto;
+    padding-right: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--teal-light) transparent;
+}
+
+.text-output::-webkit-scrollbar {
+    width: 6px;
+}
+
+.text-output::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.text-output::-webkit-scrollbar-thumb {
+    background-color: var(--teal-light);
+    border-radius: 3px;
 }
 
 .text-output p {
