@@ -11,6 +11,7 @@ lerna-debug.log*
 # Chave de API e configurações sensíveis (Cybersecurity Best Practice)
 src/assets/js/config.js
 
+
 # Arquivos temporários de sistema
 .DS_Store
 Thumbs.db
