@@ -48,8 +48,7 @@ git pull origin develop
 ---
 
 ### 2. Crie uma branch para a sua tarefa
-
-O nome da branch deve seguir o padrão:
+O nome da branch deve seguir o padrão: 
 **Exemplos reais do projeto:**
 
 ```bash

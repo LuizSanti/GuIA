@@ -206,12 +206,14 @@
         </div>
     </main>
 
-    <script src="src/assets/js/index.js"></script>
-    
+    <!-- 1. Bibliotecas externas primeiro -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://unpkg.com/tesseract.js@v5.0.1/dist/tesseract.min.js"></script>
 
+    <!-- 2. Módulos do projeto (do mais independente para o mais dependente) -->
     <script src="src/assets/js/extractor.js"></script>
+    <script src="src/assets/js/textProcessor.js"></script>
     <script src="src/assets/js/upload.js"></script>
+    <script src="src/assets/js/index.js"></script>
 </body>
 </html>
