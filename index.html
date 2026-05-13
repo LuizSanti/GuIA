@@ -268,34 +268,50 @@
                     <section class="results-content">
                         <h1 class="section-title">RESULTADOS</h1>
                         <!-- Conteúdo injetado dinamicamente por renderizarResultado() em index.js -->
-                        <div class="text-output"></div>
+                        <div class="text-output" id="text-output-scroll"></div>
                     </section>
                     <aside class="results-sidebar">
                         <h3 class="sidebar-title">Exportar</h3>
                         <div class="actions-stack">
                             <button class="btn-action btn-danger" id="sidebar-btn-baixar">
-                                BAIXAR PDF
+                                BAIXAR RESUMO
                                 <span class="material-symbols-outlined">download</span>
                             </button>
                         </div>
 
                         <h3 class="sidebar-title" style="margin-top:18px;">Gerar conteúdo</h3>
                         <div class="actions-stack">
-                            <button class="btn-action" id="sidebar-btn-quiz">GERAR QUIZ</button>
-                            <button class="btn-action" id="sidebar-btn-pontos">EXTRAIR PONTOS-CHAVE</button>
-                            <button class="btn-action" id="sidebar-btn-questionario">GERAR QUESTIONÁRIO</button>
+                            <button class="btn-action btn-action--with-download" id="sidebar-btn-quiz">
+                                <span class="btn-label">GERAR QUIZ</span>
+                                <span class="btn-download-icon material-symbols-outlined" data-download="quiz" title="Baixar Quiz">download</span>
+                            </button>
+                            <button class="btn-action btn-action--with-download" id="sidebar-btn-pontos">
+                                <span class="btn-label">EXTRAIR PONTOS-CHAVE</span>
+                                <span class="btn-download-icon material-symbols-outlined" data-download="pontos" title="Baixar Pontos-chave">download</span>
+                            </button>
+                            <button class="btn-action btn-action--with-download" id="sidebar-btn-questionario">
+                                <span class="btn-label">GERAR QUESTIONÁRIO</span>
+                                <span class="btn-download-icon material-symbols-outlined" data-download="questionario" title="Baixar Questionário">download</span>
+                            </button>
                             <!-- US05: perguntas de revisão -->
-                            <button class="btn-action" id="sidebar-btn-revisao">PERGUNTAS DE REVISÃO</button>
+                            <button class="btn-action btn-action--with-download" id="sidebar-btn-revisao">
+                                <span class="btn-label">PERGUNTAS DE REVISÃO</span>
+                                <span class="btn-download-icon material-symbols-outlined" data-download="revisao" title="Baixar Perguntas de Revisão">download</span>
+                            </button>
                             <!-- US06: simplificação de linguagem -->
-                            <button class="btn-action" id="sidebar-btn-simplificar">SIMPLIFICAR TEXTO</button>
+                            <button class="btn-action btn-action--with-download" id="sidebar-btn-simplificar">
+                                <span class="btn-label">SIMPLIFICAR TEXTO</span>
+                                <span class="btn-download-icon material-symbols-outlined" data-download="simplificar" title="Baixar Texto Simplificado">download</span>
+                            </button>
                         </div>
                     </aside>
                 </div>
             </div>
 
-            <!-- US08/US09: histórico do chat (injetado por index.js quando há mensagem) -->
-
-            <div class="prompt-bar">
+            <!-- US08/US09: histórico do chat fixo, sempre visível acima do input -->
+            <div class="chat-wrapper">
+                <div id="chat-historico" class="chat-historico" style="display:none;"></div>
+                <div class="prompt-bar">
                 <input type="text" placeholder="Pergunte algo sobre o documento..." id="promptInput">
                 <button class="btn-send" id="sendBtn" title="Enviar pergunta">
                     <span class="material-symbols-outlined">send</span>
@@ -304,6 +320,7 @@
                     <span class="material-symbols-outlined">mic</span>
                 </button>
             </div>
+            </div><!-- /.chat-wrapper -->
         </div>
     </main>
 

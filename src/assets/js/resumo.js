@@ -64,12 +64,18 @@ Não inclua informações que não estejam no texto. Texto:`,
 
         'questionario': `Com base EXCLUSIVAMENTE no texto abaixo, crie um guia de perguntas e respostas em português brasileiro.
 Formate a saída EXATAMENTE assim:
-## QUESTIONÁRIO
-**Pergunta 1:** texto da pergunta?
-**Resposta:** texto da resposta.
+## QUESTIONÁRIO (grande e em negrito)
 
-**Pergunta 2:** texto da pergunta?
-**Resposta:** texto da resposta.
+em negrito - **Pergunta 1:** texto da pergunta? 
+
+em negrito - **Pergunta 2:** texto da pergunta?
+
+
+## RESPOSTAS (NO FINAL)
+
+em negrito - **Resposta:** texto da resposta.
+
+em negrito -**Resposta:** texto da resposta.
 (continue para todas as perguntas relevantes)
 Use somente o que está no texto. Texto:`,
 
