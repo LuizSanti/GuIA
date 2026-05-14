@@ -154,8 +154,8 @@ async function iniciarProcessamento() {
 }
 
 function obterApiKey() {
-    if (typeof CONFIG !== 'undefined' && (CONFIG.GROQ_API_KEY || CONFIG.GEMINI_API_KEY)) {
-        return CONFIG.GROQ_API_KEY || CONFIG.GEMINI_API_KEY;
+    if (typeof CONFIG !== 'undefined' && (CONFIG.GROQ_API_KEY)) {
+        return CONFIG.GROQ_API_KEY;
     }
     return prompt('API Key não encontrada no config.js. Digite-a:') || null;
 }
@@ -281,7 +281,7 @@ function gerarPDF(texto) {
     doc.setTextColor(...VERDE);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
-    doc.text('G', MEsq + 7, 32);
+    doc.text('GuIA', MEsq + 7, 32);
 
     // Nome do app
     doc.setTextColor(...BRANCO);
