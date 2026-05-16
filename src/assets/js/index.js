@@ -1,21 +1,41 @@
 /**
  * index.js - Controlador de Interface
- * Faz a ponte entre o HTML e a lógica de processamento.
  *
- * Alterações desta versão:
- *  - PDF com formatação rica: ## vira seção colorida, **texto** vira negrito
- *  - Nome do arquivo de download: {nomeArquivo}_{ACAO}.pdf
- *  - renderizarResultado() interpreta Markdown (##, **) para HTML
- *  - Novos botões sidebar: US05 (revisao) e US06 (simplificar)
- *  - Botão de chat ativo (US08/US09) — dispara chat.js
+ * [Sprint 3] US24 — Loading controlado em todas as chamadas à API
+ * [Sprint 3] US25 — Mensagens de erro amigáveis por tipo de falha
  */
 
-let acaoAtual      = null;
+let acaoAtual       = null;
 let ultimoResultado = '';
+
+// ─── Mensagens amigáveis por tipo de erro (US25) ──────────────────────────────
+//
+// Cada chave corresponde ao .tipo lançado pelo ErroGuIA em resumo.js.
+// 'default' cobre qualquer situação não mapeada.
+
+const MENSAGENS_ERRO = {
+    timeout:        'A análise demorou mais do que o esperado. Verifique sua conexão e tente novamente.',
+    resposta_vazia: 'A inteligência artificial não conseguiu gerar um resultado para este documento. Tente com um arquivo diferente.',
+    api:            'Não foi possível se conectar ao serviço de análise. Tente novamente em alguns instantes.',
+    desconhecido:   'Algo deu errado durante o processamento. Tente novamente.',
+};
+
+function traduzirErro(erro) {
+    return MENSAGENS_ERRO[erro?.tipo] || MENSAGENS_ERRO.desconhecido;
+}
+
+// ─── Tela de erro (US25) ──────────────────────────────────────────────────────
+
+function mostrarTelaErro(mensagemAmigavel) {
+    const helperEl = document.querySelector('#screen-error .helper-text');
+    if (helperEl) helperEl.textContent = mensagemAmigavel;
+    showScreen('error');
+}
+
+// ─── Inicialização ────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // ── Dropdown de tipo de arquivo ──────────────────────────────────────────
     const dropdownToggle = document.getElementById('dropdownToggle');
     const dropdownMenu   = document.getElementById('dropdownMenu');
     if (dropdownToggle && dropdownMenu) {
@@ -25,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ── Botões de ação da tela de upload ─────────────────────────────────────
     document.querySelectorAll('.btn-action[data-action]').forEach(btn => {
         btn.addEventListener('click', () => {
             acaoAtual = btn.dataset.action;
@@ -33,9 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ── Sidebar: ações sobre o resultado ─────────────────────────────────────
-
-    // Mapa de resultados gerados por ação (para download individual)
     window.GuIA = window.GuIA || {};
     window.GuIA.resultadosPorAcao = {};
 
@@ -43,15 +59,14 @@ document.addEventListener('DOMContentLoaded', () => {
         'sidebar-btn-quiz':          'quiz',
         'sidebar-btn-pontos':        'pontos',
         'sidebar-btn-questionario':  'questionario',
-        'sidebar-btn-revisao':       'revisao',     // US05
-        'sidebar-btn-simplificar':   'simplificar', // US06
+        'sidebar-btn-revisao':       'revisao',
+        'sidebar-btn-simplificar':   'simplificar',
     };
 
     Object.entries(sidebarAcoes).forEach(([id, acao]) => {
         const btn = document.getElementById(id);
         if (!btn) return;
 
-        // Clique no label → gera conteúdo
         const label = btn.querySelector('.btn-label') || btn;
         label.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -59,10 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
             iniciarProcessamento();
         });
 
-        // Clique no ícone de download → baixa resultado já gerado
         const iconeDownload = btn.querySelector('.btn-download-icon');
         if (iconeDownload) {
-            iconeDownload.classList.add('sem-conteudo'); // começa desabilitado
+            iconeDownload.classList.add('sem-conteudo');
             iconeDownload.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const texto = window.GuIA.resultadosPorAcao[acao];
@@ -73,24 +87,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ── Download PDF ─────────────────────────────────────────────────────────
     const btnBaixar = document.getElementById('sidebar-btn-baixar');
     if (btnBaixar) {
         btnBaixar.addEventListener('click', () => {
-            // Baixa sempre o resumo, independente do que está sendo exibido
             const textoResumo = window.GuIA.resultadosPorAcao?.['resumo'] || ultimoResultado;
             if (!textoResumo) {
-                alert('Nenhum resumo gerado ainda. Gere um resumo primeiro.');
+                mostrarTelaErro('Nenhum resumo foi gerado ainda. Gere um resumo primeiro.');
                 return;
             }
             const acaoAnterior = acaoAtual;
             acaoAtual = 'resumo';
             gerarPDF(textoResumo);
-            acaoAtual = acaoAnterior; // restaura ação atual
+            acaoAtual = acaoAnterior;
         });
     }
 
-    // ── Chat (US08/US09) ─────────────────────────────────────────────────────
     const promptInput = document.getElementById('promptInput');
     const micBtn      = document.getElementById('micBtn');
 
@@ -112,17 +123,25 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ─── Processamento ────────────────────────────────────────────────────────────
+//
+// US24: showScreen('processing') é sempre chamado ANTES de qualquer await.
+// Isso garante que o spinner apareça para TODAS as chamadas —
+// tanto o fluxo de upload quanto os botões da sidebar (quiz, pontos, revisão...).
+//
+// US25: o catch captura ErroGuIA (com .tipo definido) ou erros genéricos,
+// traduz para mensagem legível e exibe na tela de erro. Zero alert().
 
 async function iniciarProcessamento() {
     const state = window.GuIA.uploadState;
     if (!state || !state.chunks || state.chunks.length === 0) {
-        alert('Por favor, faça o upload de um arquivo primeiro!');
+        mostrarTelaErro('Nenhum documento foi carregado. Faça o upload de um arquivo antes de continuar.');
         return;
     }
 
     const apiKey = obterApiKey();
     if (!apiKey) return;
 
+    // US24 — exibe processing ANTES do await
     showScreen('processing');
     atualizarTelaProcessamento(state.fileName, 0, state.chunks.length);
 
@@ -135,27 +154,24 @@ async function iniciarProcessamento() {
         );
 
         ultimoResultado = resultadoFinal;
-
-        // Salva resultado por ação para download individual
         window.GuIA.resultadosPorAcao = window.GuIA.resultadosPorAcao || {};
         window.GuIA.resultadosPorAcao[acaoAtual] = resultadoFinal;
 
-        // Habilita o ícone de download do botão correspondente (se existir)
         const btnAtual = document.querySelector(`[data-download="${acaoAtual}"]`);
         if (btnAtual) btnAtual.classList.remove('sem-conteudo');
 
-        renderizarResultado(resultadoFinal);
+        renderizarResultado(resultadoFinal, acaoAtual);
         showScreen('results');
+
     } catch (erro) {
-        console.error(erro);
-        alert('Falha: ' + erro.message);
-        showScreen('upload');
+        console.error('[GuIA]', erro);
+        mostrarTelaErro(traduzirErro(erro));
     }
 }
 
 function obterApiKey() {
-    if (typeof CONFIG !== 'undefined' && (CONFIG.GROQ_API_KEY)) {
-        return CONFIG.GROQ_API_KEY;
+    if (typeof CONFIG !== 'undefined' && (CONFIG.GROQ_API_KEY || CONFIG.GEMINI_API_KEY)) {
+        return CONFIG.GROQ_API_KEY || CONFIG.GEMINI_API_KEY;
     }
     return prompt('API Key não encontrada no config.js. Digite-a:') || null;
 }
@@ -170,9 +186,8 @@ function showScreen(screenId) {
     const contentArea = document.querySelector('.content-area');
     if (contentArea) {
         if (screenId === 'results') {
-            // Ajusta a área de conteúdo para ocupar o espaço disponível sem quebrar o chat
             contentArea.style.justifyContent = 'flex-start';
-            contentArea.style.overflow = 'hidden'; 
+            contentArea.style.overflow = 'hidden';
         } else {
             contentArea.style.justifyContent = 'center';
             contentArea.style.overflowY = 'auto';
@@ -183,53 +198,70 @@ function showScreen(screenId) {
 function atualizarTelaProcessamento(fileName, atual, total) {
     const pct    = total > 0 ? Math.round((atual / total) * 100) : 0;
     const fill   = document.querySelector('.progress-fill');
+    const pct_el = document.querySelector('.progress-percent');
     const status = document.querySelector('.status-text');
-    if (fill)   fill.style.width = pct + '%';
-    if (status) status.innerHTML = `Processando <strong>${fileName}</strong>... (${atual}/${total})`;
+
+    if (fill)   fill.style.width   = pct + '%';
+    if (pct_el) pct_el.textContent = pct + '% completo';
+    if (status) status.innerHTML   = `Analisando <strong>${fileName}</strong>... (${atual}/${total})`;
 }
 
-// ─── Renderização do resultado (interpreta Markdown leve) ────────────────────
+// ─── Renderização do resultado ────────────────────────────────────────────────
 
-function renderizarResultado(texto) {
-    const output = document.querySelector('.text-output');
+const RESULT_BLOCK_META = {
+    resumo:       { icon: 'summarize',            label: 'Resumo'               },
+    quiz:         { icon: 'quiz',                 label: 'Quiz'                 },
+    pontos:       { icon: 'format_list_bulleted', label: 'Pontos-chave'         },
+    questionario: { icon: 'help_outline',         label: 'Questionário'         },
+    revisao:      { icon: 'rate_review',          label: 'Perguntas de Revisão' },
+    simplificar:  { icon: 'translate',            label: 'Texto Simplificado'   },
+};
+
+function renderizarResultado(texto, acao) {
+    const output = document.getElementById('text-output-scroll');
     if (!output) return;
 
-    // Limpa e oculta o histórico do chat a cada novo resultado gerado
     const historico = document.getElementById('chat-historico');
     if (historico) {
         historico.innerHTML = '';
         historico.style.display = 'none';
     }
 
-    output.innerHTML = texto.split('\n')
+    const meta = RESULT_BLOCK_META[acao] || { icon: 'article', label: 'Resultado' };
+
+    const corpoHTML = texto.split('\n')
         .filter(l => l.trim())
         .map(linha => {
-            // ## Seção → h2
-            if (linha.startsWith('## ')) {
+            if (linha.startsWith('## '))
                 return `<h2 class="result-section-title">${linha.slice(3)}</h2>`;
-            }
-            // TÍTULO: ... → destaque
-            if (linha.startsWith('TÍTULO:')) {
+            if (linha.startsWith('TÍTULO:'))
                 return `<p class="result-doc-title">${linha}</p>`;
-            }
-            // inline **negrito**
             const parsed = linha.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-            // • listas → <li>
-            if (linha.startsWith('•')) {
-                return `<li>${parsed.slice(1).trim()}</li>`;
-            }
-            return `<p>${parsed}</p>`;
+            if (linha.startsWith('•') || linha.startsWith('- '))
+                return `<li class="result-list-item">${parsed.replace(/^[•\-]\s*/, '')}</li>`;
+            return `<p class="result-paragraph">${parsed}</p>`;
         })
         .join('');
+
+    output.innerHTML = `
+        <div class="result-block result-block--${acao}">
+            <div class="result-block__header">
+                <span class="result-block__icon material-symbols-outlined">${meta.icon}</span>
+                <h2 class="result-block__title">${meta.label}</h2>
+            </div>
+            <div class="result-block__body">
+                ${corpoHTML}
+            </div>
+        </div>
+    `;
 }
 
-// ─── Geração de PDF — design moderno ─────────────────────────────────────────
+// ─── Geração de PDF ───────────────────────────────────────────────────────────
 
 function gerarPDF(texto) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-    // ── Paleta ──────────────────────────────────────────────────────────────
     const VERDE        = [42, 124, 118];
     const VERDE_ESCURO = [28, 90, 86];
     const VERDE_SUAVE  = [232, 245, 244];
@@ -240,307 +272,71 @@ function gerarPDF(texto) {
     const CINZA_CLARO  = [209, 213, 219];
     const BRANCO       = [255, 255, 255];
 
-    const MEsq = 18;
-    const MDir = 18;
-    const LU   = 210 - MEsq - MDir;   // largura útil
-    const YMAX = 278;
-
+    const MEsq = 18, MDir = 18, LU = 210 - 18 - 18, YMAX = 278;
     const state = window.GuIA?.uploadState;
-
-    const titulos = {
-        resumo:       'Resumo',
-        quiz:         'Quiz',
-        pontos:       'Pontos-chave',
-        questionario: 'Questionário',
-        revisao:      'Perguntas de Revisão',
-        simplificar:  'Texto Simplificado',
-    };
+    const titulos = { resumo:'Resumo', quiz:'Quiz', pontos:'Pontos-chave', questionario:'Questionário', revisao:'Perguntas de Revisão', simplificar:'Texto Simplificado' };
     const tituloDoc = titulos[acaoAtual] || 'Resultado';
 
-    // ════════════════════════════════════════════════════════════════════════
-    // PÁGINA DE CAPA
-    // ════════════════════════════════════════════════════════════════════════
-
-    // Fundo branco limpo
-    doc.setFillColor(...BRANCO);
-    doc.rect(0, 0, 210, 297, 'F');
-
-    // Barra lateral esquerda colorida
-    doc.setFillColor(...VERDE);
-    doc.rect(0, 0, 6, 297, 'F');
-
-    // Bloco de topo com gradiente simulado (dois retângulos)
-    doc.setFillColor(...VERDE);
-    doc.rect(0, 0, 210, 72, 'F');
-    doc.setFillColor(...VERDE_ESCURO);
-    doc.rect(0, 62, 210, 10, 'F');
-
-    // Logo / marca — círculo branco com inicial
-    doc.setFillColor(...BRANCO);
-    doc.circle(MEsq + 10, 28, 10, 'F');
-    doc.setTextColor(...VERDE);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
-    doc.text('GuIA', MEsq + 7, 32);
-
-    // Nome do app
-    doc.setTextColor(...BRANCO);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(20);
-    doc.text('GuIA', MEsq + 24, 26);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(200, 235, 233);
-    doc.text('Inteligência Documental', MEsq + 24, 33);
-
-    // Tipo de conteúdo (badge)
-    const badgeW = doc.getTextWidth(tituloDoc.toUpperCase()) + 10;
-    doc.setFillColor(...BRANCO);
-    doc.roundedRect(MEsq, 44, badgeW, 8, 2, 2, 'F');
-    doc.setTextColor(...VERDE);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.text(tituloDoc.toUpperCase(), MEsq + 5, 49.5);
-
-    // Linha separadora abaixo do header
-    doc.setDrawColor(...VERDE_SUAVE);
-    doc.setLineWidth(0);
-
-    // Área central da capa
-    const capaY = 95;
-
-    // Título principal grande
-    doc.setTextColor(...PRETO);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(30);
-    doc.text(tituloDoc, MEsq, capaY);
-
-    // Subtítulo / nome do documento
-    if (state?.fileName) {
-        const nomeArquivo = state.fileName.replace(/\.[^/.]+$/, '');
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(13);
-        doc.setTextColor(...CINZA_MEDIO);
-        const nomeWrapped = doc.splitTextToSize(nomeArquivo, LU);
-        doc.text(nomeWrapped, MEsq, capaY + 12);
-    }
-
-    // Linha divisória elegante
-    doc.setDrawColor(...CINZA_CLARO);
-    doc.setLineWidth(0.4);
-    doc.line(MEsq, capaY + 26, MEsq + LU, capaY + 26);
-
-    // Metadados
-    const agora = new Date();
-    const dataStr = agora.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
-    const horaStr = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(...CINZA_MEDIO);
-    doc.text(`Gerado em  ${dataStr} às ${horaStr}`, MEsq, capaY + 34);
-
-    // Rodapé da capa
-    doc.setFillColor(...CINZA_BG);
-    doc.rect(0, 272, 210, 25, 'F');
-    doc.setTextColor(...CINZA_MEDIO);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.text('Gerado por GuIA — Inteligência Documental', MEsq, 283);
-    doc.text('Página 1', 210 - MDir, 283, { align: 'right' });
-
-    // ════════════════════════════════════════════════════════════════════════
-    // PÁGINAS DE CONTEÚDO
-    // ════════════════════════════════════════════════════════════════════════
+    doc.setFillColor(...BRANCO); doc.rect(0,0,210,297,'F');
+    doc.setFillColor(...VERDE); doc.rect(0,0,6,297,'F');
+    doc.setFillColor(...VERDE); doc.rect(0,0,210,72,'F');
+    doc.setFillColor(...VERDE_ESCURO); doc.rect(0,62,210,10,'F');
+    doc.setFillColor(...BRANCO); doc.circle(MEsq+10,28,10,'F');
+    doc.setTextColor(...VERDE); doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text('G',MEsq+7,32);
+    doc.setTextColor(...BRANCO); doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.text('GuIA',MEsq+24,26);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(200,235,233); doc.text('Inteligência Documental',MEsq+24,33);
+    const badgeW = doc.getTextWidth(tituloDoc.toUpperCase())+10;
+    doc.setFillColor(...BRANCO); doc.roundedRect(MEsq,44,badgeW,8,2,2,'F');
+    doc.setTextColor(...VERDE); doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.text(tituloDoc.toUpperCase(),MEsq+5,49.5);
+    const capaY=95;
+    doc.setTextColor(...PRETO); doc.setFont('helvetica','bold'); doc.setFontSize(30); doc.text(tituloDoc,MEsq,capaY);
+    if (state?.fileName) { const n=state.fileName.replace(/\.[^/.]+$/,''); doc.setFont('helvetica','normal'); doc.setFontSize(13); doc.setTextColor(...CINZA_MEDIO); doc.text(doc.splitTextToSize(n,LU),MEsq,capaY+12); }
+    doc.setDrawColor(...CINZA_CLARO); doc.setLineWidth(0.4); doc.line(MEsq,capaY+26,MEsq+LU,capaY+26);
+    const agora=new Date();
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...CINZA_MEDIO);
+    doc.text(`Gerado em  ${agora.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})} às ${agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`,MEsq,capaY+34);
+    doc.setFillColor(...CINZA_BG); doc.rect(0,272,210,25,'F');
+    doc.setTextColor(...CINZA_MEDIO); doc.setFont('helvetica','normal'); doc.setFontSize(8);
+    doc.text('Gerado por GuIA — Inteligência Documental',MEsq,283); doc.text('Página 1',210-MDir,283,{align:'right'});
 
     doc.addPage();
-
-    function desenharCabecalhoConteudo() {
-        // Barra lateral esquerda fina
-        doc.setFillColor(...VERDE);
-        doc.rect(0, 0, 3, 297, 'F');
-
-        // Topo compacto
-        doc.setFillColor(...CINZA_BG);
-        doc.rect(3, 0, 207, 14, 'F');
-
-        doc.setTextColor(...VERDE);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8);
-        doc.text('GuIA', MEsq, 9);
-
-        doc.setTextColor(...CINZA_MEDIO);
-        doc.setFont('helvetica', 'normal');
-        doc.text(tituloDoc, 210 - MDir, 9, { align: 'right' });
-
-        // Linha abaixo do topo
-        doc.setDrawColor(...CINZA_CLARO);
-        doc.setLineWidth(0.3);
-        doc.line(3, 14, 210, 14);
+    function cab() {
+        doc.setFillColor(...VERDE); doc.rect(0,0,3,297,'F');
+        doc.setFillColor(...CINZA_BG); doc.rect(3,0,207,14,'F');
+        doc.setTextColor(...VERDE); doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.text('GuIA',MEsq,9);
+        doc.setTextColor(...CINZA_MEDIO); doc.setFont('helvetica','normal'); doc.text(tituloDoc,210-MDir,9,{align:'right'});
+        doc.setDrawColor(...CINZA_CLARO); doc.setLineWidth(0.3); doc.line(3,14,210,14);
     }
-
-    function desenharRodapeConteudo(pagina, total) {
-        doc.setFillColor(...CINZA_BG);
-        doc.rect(3, 284, 207, 13, 'F');
-        doc.setDrawColor(...CINZA_CLARO);
-        doc.setLineWidth(0.3);
-        doc.line(3, 284, 210, 284);
-        doc.setTextColor(...CINZA_MEDIO);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7.5);
-        doc.text('Gerado por GuIA — Inteligência Documental', MEsq, 291);
-        doc.text(`Página ${pagina} de ${total}`, 210 - MDir, 291, { align: 'right' });
+    function rod(p,t) {
+        doc.setFillColor(...CINZA_BG); doc.rect(3,284,207,13,'F');
+        doc.setDrawColor(...CINZA_CLARO); doc.setLineWidth(0.3); doc.line(3,284,210,284);
+        doc.setTextColor(...CINZA_MEDIO); doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+        doc.text('Gerado por GuIA — Inteligência Documental',MEsq,291);
+        doc.text(`Página ${p} de ${t}`,210-MDir,291,{align:'right'});
     }
+    cab();
+    let y=26;
+    function np() { doc.addPage(); cab(); y=26; }
+    function ce(h) { if(y+h>YMAX) np(); }
 
-    desenharCabecalhoConteudo();
-
-    let y = 26;
-    let paginaAtual = 2;
-
-    function novaPagina() {
-        doc.addPage();
-        paginaAtual++;
-        desenharCabecalhoConteudo();
-        y = 26;
-    }
-
-    function checarEspaco(altura) {
-        if (y + altura > YMAX) novaPagina();
-    }
-
-    const linhas = texto.split('\n').filter(l => l.trim());
-
-    linhas.forEach(linha => {
-
-        // ── ## Seção ──────────────────────────────────────────────────────
-        if (linha.startsWith('## ')) {
-            checarEspaco(14);
-            y += 4;
-            // Bloco colorido de fundo
-            doc.setFillColor(...VERDE_SUAVE);
-            doc.roundedRect(MEsq - 3, y - 5.5, LU + 6, 9, 1.5, 1.5, 'F');
-            // Marcador lateral
-            doc.setFillColor(...VERDE);
-            doc.roundedRect(MEsq - 3, y - 5.5, 3, 9, 1, 1, 'F');
-            // Texto
-            doc.setTextColor(...VERDE);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(10);
-            doc.text(linha.slice(3).toUpperCase(), MEsq + 3, y);
-            y += 10;
-            return;
-        }
-
-        // ── TÍTULO: ───────────────────────────────────────────────────────
-        if (linha.startsWith('TÍTULO:')) {
-            checarEspaco(10);
-            const limpo = linha.replace('TÍTULO:', '').replace(/\*\*(.+?)\*\*/g, '$1').trim();
-            doc.setTextColor(...VERDE);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(13);
-            const ws = doc.splitTextToSize(limpo, LU);
-            ws.forEach(s => { checarEspaco(7); doc.text(s, MEsq, y); y += 7; });
-            y += 3;
-            return;
-        }
-
-        // ── ### Subtítulo (Pergunta, Resposta, Q1...) ─────────────────────
-        if (linha.startsWith('### ')) {
-            checarEspaco(10);
-            y += 3;
-            const limpo = linha.slice(4).replace(/\*\*(.+?)\*\*/g, '$1');
-            doc.setTextColor(...CINZA_TEXTO);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(10);
-            const ws = doc.splitTextToSize(limpo, LU);
-            ws.forEach(s => { checarEspaco(6); doc.text(s, MEsq, y); y += 6; });
-            y += 1;
-            return;
-        }
-
-        // ── Número + opção (a, b, c, d) ───────────────────────────────────
-        if (/^[a-d]\)/.test(linha.trim())) {
-            checarEspaco(6);
-            const limpo = linha.replace(/\*\*(.+?)\*\*/g, '$1').trim();
-            doc.setTextColor(...CINZA_MEDIO);
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9.5);
-            const ws = doc.splitTextToSize(limpo, LU - 8);
-            ws.forEach((s, i) => {
-                checarEspaco(5.5);
-                doc.text(s, MEsq + (i === 0 ? 5 : 10), y);
-                y += 5.5;
-            });
-            return;
-        }
-
-        // ── Listas com • ou - ─────────────────────────────────────────────
-        if (linha.startsWith('•') || linha.startsWith('- ')) {
-            checarEspaco(6);
-            const limpo = linha.replace(/^[•\-]\s*/, '').replace(/\*\*(.+?)\*\*/g, '$1');
-            // Bullet colorido
-            doc.setFillColor(...VERDE);
-            doc.circle(MEsq + 1.5, y - 1.5, 1.2, 'F');
-            doc.setTextColor(...CINZA_TEXTO);
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(10);
-            const ws = doc.splitTextToSize(limpo, LU - 7);
-            ws.forEach((s, i) => {
-                checarEspaco(5.8);
-                doc.text(s, MEsq + 6, y);
-                y += 5.8;
-            });
-            y += 1;
-            return;
-        }
-
-        // ── Linha bold completa (subtítulos livres) ────────────────────────
-        const isBoldLine = /^\*\*.+\*\*$/.test(linha.trim());
-        const limpo = linha.replace(/\*\*(.+?)\*\*/g, '$1').trim();
-
-        if (isBoldLine) {
-            checarEspaco(8);
-            y += 2;
-            doc.setTextColor(...PRETO);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(10.5);
-            const ws = doc.splitTextToSize(limpo, LU);
-            ws.forEach(s => { checarEspaco(6); doc.text(s, MEsq, y); y += 6; });
-            y += 1;
-            return;
-        }
-
-        // ── Parágrafo normal ──────────────────────────────────────────────
-        checarEspaco(6);
-        doc.setTextColor(...CINZA_TEXTO);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        const ws = doc.splitTextToSize(limpo, LU);
-        ws.forEach(s => { checarEspaco(5.8); doc.text(s, MEsq, y); y += 5.8; });
-        y += 2;
+    texto.split('\n').filter(l=>l.trim()).forEach(linha=>{
+        if(linha.startsWith('## ')){ ce(14);y+=4; doc.setFillColor(...VERDE_SUAVE); doc.roundedRect(MEsq-3,y-5.5,LU+6,9,1.5,1.5,'F'); doc.setFillColor(...VERDE); doc.roundedRect(MEsq-3,y-5.5,3,9,1,1,'F'); doc.setTextColor(...VERDE); doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.text(linha.slice(3).toUpperCase(),MEsq+3,y); y+=10; return; }
+        if(linha.startsWith('TÍTULO:')){ ce(10); const l=linha.replace('TÍTULO:','').replace(/\*\*(.+?)\*\*/g,'$1').trim(); doc.setTextColor(...VERDE); doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.splitTextToSize(l,LU).forEach(s=>{ce(7);doc.text(s,MEsq,y);y+=7;}); y+=3; return; }
+        if(linha.startsWith('### ')){ ce(10);y+=3; const l=linha.slice(4).replace(/\*\*(.+?)\*\*/g,'$1'); doc.setTextColor(...CINZA_TEXTO); doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.splitTextToSize(l,LU).forEach(s=>{ce(6);doc.text(s,MEsq,y);y+=6;}); y+=1; return; }
+        if(/^[a-d]\)/.test(linha.trim())){ ce(6); const l=linha.replace(/\*\*(.+?)\*\*/g,'$1').trim(); doc.setTextColor(...CINZA_MEDIO); doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.splitTextToSize(l,LU-8).forEach((s,i)=>{ce(5.5);doc.text(s,MEsq+(i===0?5:10),y);y+=5.5;}); return; }
+        if(linha.startsWith('•')||linha.startsWith('- ')){ ce(6); const l=linha.replace(/^[•\-]\s*/,'').replace(/\*\*(.+?)\*\*/g,'$1'); doc.setFillColor(...VERDE); doc.circle(MEsq+1.5,y-1.5,1.2,'F'); doc.setTextColor(...CINZA_TEXTO); doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.splitTextToSize(l,LU-7).forEach(s=>{ce(5.8);doc.text(s,MEsq+6,y);y+=5.8;}); y+=1; return; }
+        const isBold=/^\*\*.+\*\*$/.test(linha.trim()); const l=linha.replace(/\*\*(.+?)\*\*/g,'$1').trim();
+        if(isBold){ ce(8);y+=2; doc.setTextColor(...PRETO); doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.splitTextToSize(l,LU).forEach(s=>{ce(6);doc.text(s,MEsq,y);y+=6;}); y+=1; return; }
+        ce(6); doc.setTextColor(...CINZA_TEXTO); doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.splitTextToSize(l,LU).forEach(s=>{ce(5.8);doc.text(s,MEsq,y);y+=5.8;}); y+=2;
     });
 
-    // ── Rodapé em todas as páginas de conteúdo ──
-    const totalPaginas = doc.internal.getNumberOfPages();
-    for (let i = 2; i <= totalPaginas; i++) {
-        doc.setPage(i);
-        desenharRodapeConteudo(i, totalPaginas);
-    }
-    // Atualiza rodapé da capa com total correto
-    doc.setPage(1);
-    doc.setFillColor(...CINZA_BG);
-    doc.rect(160, 278, 50, 8, 'F');
-    doc.setTextColor(...CINZA_MEDIO);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.text(`Página 1 de ${totalPaginas}`, 210 - MDir, 283, { align: 'right' });
-
-    // ── Salvar ──
-    const nomeBase = (state?.fileName || 'documento')
-        .replace(/\.[^/.]+$/, '')
-        .replace(/\s+/g, '_');
-    const nomeAcao = (acaoAtual || 'resultado').toUpperCase();
-    doc.save(`${nomeBase}_${nomeAcao}.pdf`);
+    const tot=doc.internal.getNumberOfPages();
+    for(let i=2;i<=tot;i++){doc.setPage(i);rod(i,tot);}
+    doc.setPage(1); doc.setFillColor(...CINZA_BG); doc.rect(160,278,50,8,'F');
+    doc.setTextColor(...CINZA_MEDIO); doc.setFont('helvetica','normal'); doc.setFontSize(8);
+    doc.text(`Página 1 de ${tot}`,210-MDir,283,{align:'right'});
+    const nb=(state?.fileName||'documento').replace(/\.[^/.]+$/,'').replace(/\s+/g,'_');
+    doc.save(`${nb}_${(acaoAtual||'resultado').toUpperCase()}.pdf`);
 }
 
 // ─── Chat contextual (US08/US09) ─────────────────────────────────────────────
@@ -559,16 +355,14 @@ async function enviarMensagemChat(pergunta) {
 
     exibirMensagemChat('usuario', pergunta);
 
-    // Seleciona chunks relevantes pela presença de palavras-chave da pergunta
-    const palavras   = pergunta.toLowerCase().split(/\s+/).filter(p => p.length > 3);
-    const chunksRel  = state.chunks
+    const palavras  = pergunta.toLowerCase().split(/\s+/).filter(p => p.length > 3);
+    const chunksRel = state.chunks
         .map((c, i) => ({ c, score: palavras.filter(p => c.toLowerCase().includes(p)).length, i }))
         .filter(x => x.score > 0)
         .sort((a, b) => b.score - a.score)
         .slice(0, 3)
         .map(x => x.c);
 
-    // Fallback: usa os 2 primeiros chunks se nenhum foi relevante
     const contexto = chunksRel.length > 0
         ? chunksRel.join('\n\n')
         : state.chunks.slice(0, 2).join('\n\n');
@@ -599,27 +393,19 @@ ${contexto}
         exibirMensagemChat('assistente', resposta);
     } catch (erro) {
         removerUltimaMensagemSistema();
-        exibirMensagemChat('sistema', '⚠️ Erro ao consultar a IA: ' + erro.message);
+        exibirMensagemChat('sistema', '⚠️ ' + traduzirErro(erro));
     }
 }
 
 function exibirMensagemChat(tipo, texto) {
-    // O #chat-historico já existe no DOM fixo — só precisamos mostrá-lo
     const historico = document.getElementById('chat-historico');
     if (!historico) return;
-
-    // Torna visível na primeira mensagem
     historico.style.display = 'flex';
-
     const msg = document.createElement('div');
     msg.className = `chat-msg chat-msg--${tipo}`;
-
-    // Interpreta Markdown leve na resposta do assistente
-    const html = tipo === 'assistente'
+    msg.innerHTML = tipo === 'assistente'
         ? texto.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')
         : texto;
-
-    msg.innerHTML = html;
     historico.appendChild(msg);
     historico.scrollTop = historico.scrollHeight;
 }
