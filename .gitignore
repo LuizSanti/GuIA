@@ -6,6 +6,16 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+# --- GuIA Project Specifics ---
+
+# Chave de API e configurações sensíveis (Cybersecurity Best Practice)
+src/assets/js/config.js
+
+
+# Arquivos temporários de sistema
+.DS_Store
+Thumbs.db
+
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
