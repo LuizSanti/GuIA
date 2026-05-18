@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     <link rel="stylesheet" href="src/assets/css/style.css">
     <link rel="stylesheet" href="src/assets/css/upload.css">
-
+    <link rel="stylesheet" href="src/assets/css/results.css">
     
 </head>
 <body>
@@ -33,7 +33,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="#" id="nav-historico">
                             <span class="material-symbols-outlined">history</span>
                             <span class="nav-label">Histórico</span>
                         </a>
@@ -210,6 +210,7 @@
                     </aside>
                 </div>
             </div>
+            <div id="screen-history" class="screen-container" style="display: none;"></div>
 
             <!-- US08/US09: histórico do chat fixo, sempre visível acima do input -->
             <div class="chat-wrapper">
@@ -238,6 +239,7 @@
     <script src="src/assets/js/textProcessor.js"></script>
     <script src="src/assets/js/resumo.js"></script>
     <script src="src/assets/js/upload.js"></script>
+    <script src="src/assets/js/historico.js"></script>
     <script src="src/assets/js/index.js"></script>
 
     <!-- US08/US09: listener do botão enviar (complementa o Enter do index.js) -->
