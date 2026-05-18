@@ -120,6 +120,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (promptInput) promptInput.focus();
         });
     }
+    const navHistorico = document.getElementById('nav-historico');
+     if (navHistorico) {
+         navHistorico.addEventListener('click', (e) => {
+             e.preventDefault();
+             window.GuIA.historico.renderizarTelaHistorico();
+             showScreen('history');
+         });
+     }
 });
 
 // ─── Processamento ────────────────────────────────────────────────────────────
@@ -162,6 +170,7 @@ async function iniciarProcessamento() {
 
         renderizarResultado(resultadoFinal, acaoAtual);
         showScreen('results');
+        window.GuIA.historico.adicionarEntrada(state, acaoAtual, resultadoFinal);
 
     } catch (erro) {
         console.error('[GuIA]', erro);
@@ -354,6 +363,10 @@ async function enviarMensagemChat(pergunta) {
     if (!apiKey) return;
 
     exibirMensagemChat('usuario', pergunta);
+    const promptInput = document.getElementById('promptInput');
+    const sendBtn     = document.getElementById('sendBtn');
+    if (promptInput) promptInput.disabled = true;
+    if (sendBtn)     sendBtn.disabled     = true;
 
     const palavras  = pergunta.toLowerCase().split(/\s+/).filter(p => p.length > 3);
     const chunksRel = state.chunks
@@ -394,6 +407,9 @@ ${contexto}
     } catch (erro) {
         removerUltimaMensagemSistema();
         exibirMensagemChat('sistema', '⚠️ ' + traduzirErro(erro));
+    } finally {
+        if (promptInput) { promptInput.disabled = false; promptInput.focus(); }
+        if (sendBtn)     sendBtn.disabled = false;
     }
 }
 
@@ -407,7 +423,9 @@ function exibirMensagemChat(tipo, texto) {
         ? texto.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')
         : texto;
     historico.appendChild(msg);
-    historico.scrollTop = historico.scrollHeight;
+    requestAnimationFrame(() => {
+        historico.scrollTo({ top: historico.scrollHeight, behavior: 'smooth' });
+    });
 }
 
 function removerUltimaMensagemSistema() {
