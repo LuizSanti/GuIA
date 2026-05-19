@@ -146,9 +146,6 @@ async function iniciarProcessamento() {
         return;
     }
 
-    const apiKey = obterApiKey();
-    if (!apiKey) return;
-
     // US24 — exibe processing ANTES do await
     showScreen('processing');
     atualizarTelaProcessamento(state.fileName, 0, state.chunks.length);
@@ -156,7 +153,6 @@ async function iniciarProcessamento() {
     try {
         const { resultadoFinal } = await window.GuIA.resumo.gerarConteudoIA(
             state.chunks,
-            apiKey,
             acaoAtual,
             { onProgresso: (atual, total) => atualizarTelaProcessamento(state.fileName, atual, total) }
         );
@@ -176,13 +172,6 @@ async function iniciarProcessamento() {
         console.error('[GuIA]', erro);
         mostrarTelaErro(traduzirErro(erro));
     }
-}
-
-function obterApiKey() {
-    if (typeof CONFIG !== 'undefined' && (CONFIG.GROQ_API_KEY || CONFIG.GEMINI_API_KEY)) {
-        return CONFIG.GROQ_API_KEY || CONFIG.GEMINI_API_KEY;
-    }
-    return prompt('API Key não encontrada no config.js. Digite-a:') || null;
 }
 
 // ─── Telas ────────────────────────────────────────────────────────────────────
@@ -359,9 +348,6 @@ async function enviarMensagemChat(pergunta) {
         return;
     }
 
-    const apiKey = obterApiKey();
-    if (!apiKey) return;
-
     exibirMensagemChat('usuario', pergunta);
     const promptInput = document.getElementById('promptInput');
     const sendBtn     = document.getElementById('sendBtn');
@@ -401,7 +387,7 @@ ${contexto}
     exibirMensagemChat('sistema', '⏳ Consultando o documento...');
 
     try {
-        const resposta = await window.GuIA.resumo.chamarAPIChat(mensagens, apiKey);
+        const resposta = await window.GuIA.resumo.chamarAPIChat(mensagens);
         removerUltimaMensagemSistema();
         exibirMensagemChat('assistente', resposta);
     } catch (erro) {
