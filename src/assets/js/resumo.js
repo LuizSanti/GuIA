@@ -7,7 +7,8 @@
 
 'use strict';
 
-const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+// Chama o proxy do servidor — a chave fica no .env do backend, nunca exposta.
+const API_URL = '/api/groq';
 const MODELO  = 'llama-3.1-8b-instant';
 
 // Tempo máximo de espera por resposta da API (ms)
@@ -154,7 +155,7 @@ class ErroGuIA extends Error {
 
 // ─── Chamada principal à API ──────────────────────────────────────────────────
 
-async function chamarAPI(promptUsuario, apiKey) {
+async function chamarAPI(promptUsuario) {
     const payload = {
         model: MODELO,
         messages: [
@@ -167,10 +168,7 @@ async function chamarAPI(promptUsuario, apiKey) {
 
     const resposta = await fetchComTimeout(API_URL, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     });
 
@@ -192,7 +190,7 @@ async function chamarAPI(promptUsuario, apiKey) {
 
 // ─── Chamada dedicada para o chat contextual (US08/US09) ─────────────────────
 
-async function chamarAPIChat(mensagens, apiKey) {
+async function chamarAPIChat(mensagens) {
     const payload = {
         model: MODELO,
         messages: mensagens,
@@ -202,10 +200,7 @@ async function chamarAPIChat(mensagens, apiKey) {
 
     const resposta = await fetchComTimeout(API_URL, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     });
 
@@ -226,13 +221,13 @@ async function chamarAPIChat(mensagens, apiKey) {
 
 // ─── Geração de conteúdo por chunks ──────────────────────────────────────────
 
-async function gerarConteudoIA(chunks, apiKey, acao, { onProgresso } = {}) {
+async function gerarConteudoIA(chunks, acao, { onProgresso } = {}) {
     const resultadosParciais = [];
 
     for (let i = 0; i < chunks.length; i++) {
         if (onProgresso) onProgresso(i + 1, chunks.length);
         const prompt    = montarPromptChunk(chunks[i], acao);
-        const resultado = await chamarAPI(prompt, apiKey);
+        const resultado = await chamarAPI(prompt);
         resultadosParciais.push(resultado);
     }
 
@@ -242,8 +237,7 @@ async function gerarConteudoIA(chunks, apiKey, acao, { onProgresso } = {}) {
             `Consolide os trechos abaixo em um único resultado coeso em português brasileiro.\n` +
             `Mantenha toda a formatação Markdown (##, **, •) presente nos trechos.\n` +
             `Use APENAS as informações presentes nos trechos. Não adicione nada externo.\n\n` +
-            resultadosParciais.join('\n\n'),
-            apiKey
+            resultadosParciais.join('\n\n')
           );
 
     return { resultadoFinal };
