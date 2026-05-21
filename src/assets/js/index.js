@@ -204,55 +204,95 @@ function atualizarTelaProcessamento(fileName, atual, total) {
     if (status) status.innerHTML   = `Analisando <strong>${fileName}</strong>... (${atual}/${total})`;
 }
 
-// ─── Renderização do resultado ────────────────────────────────────────────────
+// ─── Renderização do resultado (com envelopamento de Design System) ─────────
 
-const RESULT_BLOCK_META = {
-    resumo:       { icon: 'summarize',            label: 'Resumo'               },
-    quiz:         { icon: 'quiz',                 label: 'Quiz'                 },
-    pontos:       { icon: 'format_list_bulleted', label: 'Pontos-chave'         },
-    questionario: { icon: 'help_outline',         label: 'Questionário'         },
-    revisao:      { icon: 'rate_review',          label: 'Perguntas de Revisão' },
-    simplificar:  { icon: 'translate',            label: 'Texto Simplificado'   },
-};
-
-function renderizarResultado(texto, acao) {
-    const output = document.getElementById('text-output-scroll');
+function renderizarResultado(texto) {
+    const output = document.querySelector('.text-output');
     if (!output) return;
 
+    // Limpa e oculta o histórico do chat a cada novo resultado gerado
     const historico = document.getElementById('chat-historico');
     if (historico) {
         historico.innerHTML = '';
         historico.style.display = 'none';
     }
 
-    const meta = RESULT_BLOCK_META[acao] || { icon: 'article', label: 'Resultado' };
+    // Determina o tema visual do cartão com base na ação selecionada
+    const isRevisao = ['revisao', 'quiz', 'questionario'].includes(acaoAtual);
+    const classeBloco = isRevisao ? 'result-block--revisao' : 'result-block--resumo';
+    const iconeBloco = isRevisao ? 'quiz' : 'summarize';
 
-    const corpoHTML = texto.split('\n')
-        .filter(l => l.trim())
-        .map(linha => {
-            if (linha.startsWith('## '))
-                return `<h2 class="result-section-title">${linha.slice(3)}</h2>`;
-            if (linha.startsWith('TÍTULO:'))
-                return `<p class="result-doc-title">${linha}</p>`;
-            const parsed = linha.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-            if (linha.startsWith('•') || linha.startsWith('- '))
-                return `<li class="result-list-item">${parsed.replace(/^[•\-]\s*/, '')}</li>`;
-            return `<p class="result-paragraph">${parsed}</p>`;
-        })
-        .join('');
+    let htmlFinal = '';
+    let dentroDeBloco = false;
+    let dentroDeLista = false;
 
-    output.innerHTML = `
-        <div class="result-block result-block--${acao}">
-            <div class="result-block__header">
-                <span class="result-block__icon material-symbols-outlined">${meta.icon}</span>
-                <h2 class="result-block__title">${meta.label}</h2>
-            </div>
-            <div class="result-block__body">
-                ${corpoHTML}
-            </div>
-        </div>
-    `;
+    const linhas = texto.split('\n').filter(l => l.trim());
+
+    linhas.forEach(linha => {
+        let linhaLimpa = linha.trim();
+
+        // 1. TÍTULO GERAL (Renderizado fora dos blocos)
+        if (linhaLimpa.startsWith('TÍTULO:')) {
+            htmlFinal += `<h2 class="section-title" style="margin-bottom: 24px;">${linhaLimpa.replace('TÍTULO:', '').trim()}</h2>`;
+            return;
+        }
+
+        // 2. TÍTULO DE SEÇÃO (Cria um novo cartão .result-block)
+        if (linhaLimpa.startsWith('## ')) {
+            if (dentroDeLista) { htmlFinal += `</ul>`; dentroDeLista = false; }
+            if (dentroDeBloco) { htmlFinal += `</div>`; dentroDeBloco = false; }
+            
+            dentroDeBloco = true;
+            htmlFinal += `
+            <div class="result-block ${classeBloco}">
+                <div class="result-block__header">
+                    <span class="material-symbols-outlined">${iconeBloco}</span>
+                    <h3 class="result-section-title">${linhaLimpa.slice(3).trim()}</h3>
+                </div>`;
+            return;
+        }
+
+        // Se ainda não abriu um bloco (por ex, texto sem '## ' antes), abre um padrão
+        if (!dentroDeBloco) {
+            dentroDeBloco = true;
+            htmlFinal += `
+            <div class="result-block ${classeBloco}">
+                <div class="result-block__header">
+                    <span class="material-symbols-outlined">${iconeBloco}</span>
+                    <h3 class="result-section-title">Resultado</h3>
+                </div>`;
+        }
+
+        // Aplica tag <strong> ao redor de textos entre **asteriscos**
+        let textoFormatado = linhaLimpa.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+        // 3. ITENS DE LISTA
+        if (textoFormatado.startsWith('•')) {
+            if (!dentroDeLista) {
+                htmlFinal += `<ul>`;
+                dentroDeLista = true;
+            }
+            htmlFinal += `<li class="result-list-item">${textoFormatado.slice(1).trim()}</li>`;
+        } 
+        // 4. PARÁGRAFO PADRÃO
+        else {
+            if (dentroDeLista) {
+                htmlFinal += `</ul>`;
+                dentroDeLista = false;
+            }
+            htmlFinal += `<p class="result-paragraph">${textoFormatado}</p>`;
+        }
+    });
+
+    // Fecha tags que podem ter ficado abertas no final do laço
+    if (dentroDeLista) { htmlFinal += `</ul>`; }
+    if (dentroDeBloco) { htmlFinal += `</div>`; }
+
+    output.innerHTML = htmlFinal;
 }
+
+
+
 
 // ─── Geração de PDF ───────────────────────────────────────────────────────────
 
