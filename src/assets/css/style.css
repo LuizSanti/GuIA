@@ -839,3 +839,102 @@ main {
     overflow-y: auto; /* Caso a lista de botões seja muito grande */
     height: 100%;
 }
+
+/* ==========================================================================
+   BLOCOS DE RESULTADO (RESUMO E REVISÃO)
+   ========================================================================== */
+
+/* Estilo Base do Cartão */
+.result-block {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.result-block:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Área do Cabeçalho */
+.result-block__header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px dashed var(--border-dashed);
+}
+
+.result-block__header .material-symbols-outlined {
+    font-size: 24px;
+}
+
+/* MODIFICADORES */
+
+/* Resumo (Foco principal, cores padrão) */
+.result-block--resumo {
+    border-left: 6px solid var(--teal);
+}
+
+.result-block--resumo .result-block__header .material-symbols-outlined {
+    color: var(--teal);
+}
+
+/* Revisão (Perguntas/Flashcards - Tom mais escuro e fundo destacado) */
+.result-block--revisao {
+    border-left: 6px solid var(--teal-dark);
+    background-color: #fafbfc;
+}
+
+.result-block--revisao .result-block__header .material-symbols-outlined {
+    color: var(--teal-dark);
+}
+
+/* TIPOGRAFIA INTERNA DO CARTÃO */
+.result-section-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.result-paragraph {
+    font-size: 15px;
+    line-height: 1.7; 
+    color: var(--text);
+    margin-bottom: 16px;
+}
+
+.result-paragraph:last-child {
+    margin-bottom: 0;
+}
+
+.result-block ul {
+    margin-left: 0;
+    padding-left: 0;
+}
+
+.result-list-item {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text);
+    margin-bottom: 12px;
+    padding-left: 24px;
+    position: relative;
+    list-style: none;
+}
+
+.result-list-item::before {
+    content: "•";
+    color: var(--teal-light);
+    position: absolute;
+    left: 4px;
+    font-size: 20px;
+    top: -2px; 
+}
