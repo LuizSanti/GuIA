@@ -191,6 +191,15 @@ function showScreen(screenId) {
             contentArea.style.overflowY = 'auto';
         }
     }
+
+    // Ao voltar para upload, limpa o chat e o arquivo selecionado
+    if (screenId === 'upload') {
+        const historico = document.getElementById('chat-historico');
+        if (historico) {
+            historico.innerHTML = '';
+            historico.style.display = 'none';
+        }
+    }
 }
 
 function atualizarTelaProcessamento(fileName, atual, total) {
