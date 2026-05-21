@@ -261,7 +261,7 @@ function renderizarResultado(texto) {
             return;
         }
 
-        // Se ainda não abriu um bloco (por ex, texto sem '## ' antes), abre um padrão
+        // Se ainda não abriu um bloco, abre um padrão
         if (!dentroDeBloco) {
             dentroDeBloco = true;
             htmlFinal += `
@@ -272,24 +272,41 @@ function renderizarResultado(texto) {
                 </div>`;
         }
 
+        // 3. SUBTÍTULOS/PERGUNTAS (Trata o "###" que o gestor apontou)
+        if (linhaLimpa.startsWith('### ')) {
+            if (dentroDeLista) { htmlFinal += `</ul>`; dentroDeLista = false; }
+            let textoSub = linhaLimpa.slice(4).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            // Transforma em um parágrafo destacado para manter a hierarquia elegante
+            htmlFinal += `<p class="result-paragraph" style="font-weight: 700; color: var(--teal-dark); margin-top: 16px; font-size: 16px;">${textoSub}</p>`;
+            return;
+        }
+
         // Aplica tag <strong> ao redor de textos entre **asteriscos**
         let textoFormatado = linhaLimpa.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
-        // 3. ITENS DE LISTA
-        if (textoFormatado.startsWith('•')) {
+        // 4. ITENS DE LISTA (Agora aceita tanto a bolinha "•" quanto o traço "-")
+        if (textoFormatado.startsWith('•') || textoFormatado.startsWith('- ')) {
             if (!dentroDeLista) {
                 htmlFinal += `<ul>`;
                 dentroDeLista = true;
             }
-            htmlFinal += `<li class="result-list-item">${textoFormatado.slice(1).trim()}</li>`;
+            let itemLimpo = textoFormatado.startsWith('•') ? textoFormatado.slice(1) : textoFormatado.slice(2);
+            htmlFinal += `<li class="result-list-item">${itemLimpo.trim()}</li>`;
         } 
-        // 4. PARÁGRAFO PADRÃO
+        // 5. PARÁGRAFO PADRÃO
         else {
             if (dentroDeLista) {
                 htmlFinal += `</ul>`;
                 dentroDeLista = false;
             }
-            htmlFinal += `<p class="result-paragraph">${textoFormatado}</p>`;
+            
+            // Tratamento extra de UI: se for uma alternativa de quiz (ex: "a) ", "b) ")
+            // Dá um leve recuo na margem esquerda para o design ficar mais limpo
+            if (/^[a-dA-D][\.\)]\s/.test(textoFormatado)) {
+                htmlFinal += `<p class="result-paragraph" style="margin-left: 16px; margin-bottom: 8px;">${textoFormatado}</p>`;
+            } else {
+                htmlFinal += `<p class="result-paragraph">${textoFormatado}</p>`;
+            }
         }
     });
 
@@ -299,8 +316,6 @@ function renderizarResultado(texto) {
 
     output.innerHTML = htmlFinal;
 }
-
-
 
 
 // ─── Geração de PDF ───────────────────────────────────────────────────────────
