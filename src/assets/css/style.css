@@ -938,3 +938,86 @@ main {
     font-size: 20px;
     top: -2px; 
 }
+
+/* ==========================================================================
+   INTERFACE DO CHAT (BOLHAS E CONTAINER)
+   ========================================================================== */
+
+/* Container Principal do Histórico */
+.chat-historico {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    background-color: var(--bg); /* Fundo leve para destacar as bolhas brancas/coloridas */
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    max-height: 400px;
+    overflow-y: auto;
+    
+    /* Scrollbar estilizada e discreta */
+    scrollbar-width: thin;
+    scrollbar-color: var(--teal-light) transparent;
+}
+
+.chat-historico::-webkit-scrollbar {
+    width: 6px;
+}
+.chat-historico::-webkit-scrollbar-thumb {
+    background-color: var(--teal-light);
+    border-radius: 10px;
+}
+
+/* Estilo Base da Mensagem (Bolha) */
+.chat-msg {
+    max-width: 80%;
+    padding: 14px 18px;
+    font-size: 15px;
+    line-height: 1.5;
+    position: relative;
+    animation: fadeInBubble 0.3s ease-out;
+}
+
+/* ─── Bolha do Usuário (Alinhada à direita, cor primária) ─── */
+.chat-msg--usuario {
+    align-self: flex-end;
+    background-color: var(--teal);
+    color: #ffffff;
+    border-radius: 16px 16px 0 16px; /* Canto inferior direito reto para dar efeito de fala */
+    box-shadow: 0 2px 6px rgba(42, 124, 118, 0.2);
+}
+
+/* ─── Bolha da IA / Assistente (Alinhada à esquerda, fundo neutro) ─── */
+.chat-msg--assistente {
+    align-self: flex-start;
+    background-color: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 16px 16px 16px 0; /* Canto inferior esquerdo reto */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+/* ─── Mensagem de Sistema (Avisos de processamento/erro) ─── */
+.chat-msg--sistema {
+    align-self: center;
+    background-color: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-style: italic;
+    padding: 8px 12px;
+    text-align: center;
+    max-width: 90%;
+}
+
+/* Tratamento de parágrafos dentro do chat da IA para textos mais longos */
+.chat-msg--assistente p {
+    margin-bottom: 10px;
+}
+.chat-msg--assistente p:last-child {
+    margin-bottom: 0;
+}
+
+@keyframes fadeInBubble {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
