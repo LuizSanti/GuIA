@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.GuIA.resultadosPorAcao = {};
 
     const sidebarAcoes = {
+        'sidebar-btn-resumo':        'resumo',
         'sidebar-btn-quiz':          'quiz',
         'sidebar-btn-pontos':        'pontos',
         'sidebar-btn-questionario':  'questionario',
@@ -90,17 +91,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnBaixar = document.getElementById('sidebar-btn-baixar');
     if (btnBaixar) {
         btnBaixar.addEventListener('click', () => {
-            const textoResumo = window.GuIA.resultadosPorAcao?.['resumo'] || ultimoResultado;
-            if (!textoResumo) {
-                mostrarTelaErro('Nenhum resumo foi gerado ainda. Gere um resumo primeiro.');
-                return;
-            }
-            const acaoAnterior = acaoAtual;
-            acaoAtual = 'resumo';
-            gerarPDF(textoResumo);
-            acaoAtual = acaoAnterior;
-        });
-    }
+        const acao = btnBaixar.dataset.acaoAtual;
+        if (!acao) return;
+        const texto = window.GuIA.resultadosPorAcao?.[acao];
+        if (!texto) {
+            mostrarTelaErro('Nenhum conteúdo foi gerado ainda.');
+            return;
+        }
+        const acaoAnterior = acaoAtual;
+        acaoAtual = acao;
+        gerarPDF(texto);
+        acaoAtual = acaoAnterior;
+    });
+}
 
     const promptInput = document.getElementById('promptInput');
     const micBtn      = document.getElementById('micBtn');
@@ -130,6 +133,28 @@ document.addEventListener('DOMContentLoaded', () => {
      }
 });
 
+function atualizarVisibilidadeSidebar(acao) {
+    const mapa = {
+        'sidebar-btn-quiz':         'quiz',
+        'sidebar-btn-pontos':       'pontos',
+        'sidebar-btn-questionario': 'questionario',
+        'sidebar-btn-revisao':      'revisao',
+        'sidebar-btn-simplificar':  'simplificar',
+    };
+
+    Object.entries(mapa).forEach(([id, acaoBotao]) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        // Oculta o botão da ação atual, mostra os demais
+        btn.style.display = acaoBotao === acao ? 'none' : '';
+    });
+
+    // Se a ação atual não for resumo, mostra o botão de gerar resumo na sidebar
+    const btnResumoSidebar = document.getElementById('sidebar-btn-resumo');
+    if (btnResumoSidebar) {
+        btnResumoSidebar.style.display = acao === 'resumo' ? 'none' : '';
+    }
+}
 // ─── Processamento ────────────────────────────────────────────────────────────
 //
 // US24: showScreen('processing') é sempre chamado ANTES de qualquer await.
@@ -165,12 +190,41 @@ async function iniciarProcessamento() {
         if (btnAtual) btnAtual.classList.remove('sem-conteudo');
 
         renderizarResultado(resultadoFinal, acaoAtual);
+        atualizarBotaoBaixar(acaoAtual);
+        atualizarVisibilidadeSidebar(acaoAtual);
         showScreen('results');
         window.GuIA.historico.adicionarEntrada(state, acaoAtual, resultadoFinal);
 
     } catch (erro) {
         console.error('[GuIA]', erro);
         mostrarTelaErro(traduzirErro(erro));
+    }
+}
+
+function atualizarBotaoBaixar(acao) {
+    const btnBaixar = document.getElementById('sidebar-btn-baixar');
+    if (!btnBaixar) return;
+
+    const labels = {
+        resumo:       'BAIXAR RESUMO',
+        quiz:         'BAIXAR QUIZ',
+        pontos:       'BAIXAR PONTOS-CHAVE',
+        questionario: 'BAIXAR QUESTIONÁRIO',
+        revisao:      'BAIXAR PERGUNTAS DE REVISÃO',
+        simplificar:  'BAIXAR TEXTO SIMPLIFICADO',
+    };
+
+    btnBaixar.dataset.acaoAtual = acao;
+
+    const label = btnBaixar.querySelector('.btn-label') || btnBaixar;
+    const texto = labels[acao] || 'BAIXAR RESULTADO';
+
+    // Atualiza o texto preservando o ícone de download se existir
+    const icone = btnBaixar.querySelector('.material-symbols-outlined');
+    if (icone) {
+        label.textContent = texto;
+    } else {
+        btnBaixar.textContent = texto;
     }
 }
 
