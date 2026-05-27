@@ -839,3 +839,116 @@ main {
     overflow-y: auto; /* Caso a lista de botões seja muito grande */
     height: 100%;
 }
+
+/* ==========================================================================
+   TEMA CUSTOMIZADOS E CONTROLES DE CONFIGURAÇÃO & PERFIL
+   ========================================================================== */
+
+/* Seletor active para a conta (perfil) no menu lateral */
+.conta ul li a.active {
+    background-color: rgba(42, 124, 118, 0.25);
+    border-left: 3px solid var(--teal-light);
+}
+.conta ul li a.active .material-symbols-outlined,
+.conta ul li a.active .nav-label {
+    color: #fff;
+}
+
+/* Modos de Tema */
+body.theme-dark {
+    --bg: #0b0f12;
+    --surface: #131a1e;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border: #1e293b;
+    --border-dashed: #475569;
+    --teal: #3ab5ae;
+    --teal-dark: #2a7c76;
+    --teal-light: #4cd1c9;
+    --nav-bg: #0b0e11;
+    --nav-border: #1f2731;
+}
+
+body.theme-sunset {
+    --bg: #fdf6f0;
+    --surface: #ffffff;
+    --text: #3c2f2f;
+    --text-muted: #8c7a7a;
+    --border: #eedad1;
+    --border-dashed: #dcbcae;
+    --teal: #d97706;
+    --teal-dark: #b45309;
+    --teal-light: #f59e0b;
+    --nav-bg: #1e1308;
+    --nav-border: #382410;
+}
+
+body.theme-cyber {
+    --bg: #090514;
+    --surface: #120b24;
+    --text: #f1ecfb;
+    --text-muted: #9f8fb9;
+    --border: #291a4c;
+    --border-dashed: #4c3380;
+    --teal: #a855f7;
+    --teal-dark: #7e22ce;
+    --teal-light: #c084fc;
+    --nav-bg: #05030b;
+    --nav-border: #1a0f33;
+}
+
+/* Estilo para cartões de opção de tema */
+.theme-option-card {
+    border: 2px solid var(--border);
+    transition: all 0.2s ease-in-out;
+}
+.theme-option-card:hover {
+    border-color: var(--teal-light) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+.theme-option-card.active {
+    border-color: var(--teal) !important;
+    background: rgba(42, 124, 118, 0.05) !important;
+}
+
+/* Histórico table styles */
+#history-table-container th {
+    padding: 12px 16px;
+    border-bottom: 2px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+}
+#history-table-container td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+}
+#history-table-container tr {
+    transition: background 0.15s ease;
+}
+#history-table-container tbody tr:hover {
+    background: rgba(42, 124, 118, 0.02);
+}
+
+/* Estilos de medalhas e conquistas */
+.achievement-badge {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: help;
+    transition: all 0.3s ease;
+}
+.achievement-badge.active {
+    opacity: 1 !important;
+    filter: none !important;
+    border-color: var(--teal) !important;
+    background: rgba(42, 124, 118, 0.1) !important;
+    color: var(--teal) !important;
+    box-shadow: 0 2px 8px rgba(42, 124, 118, 0.15);
+}

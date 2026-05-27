@@ -8,8 +8,23 @@
 'use strict';
 
 // Chama o proxy do servidor — a chave fica no .env do backend, nunca exposta.
-const API_URL = '/api/groq';
-const MODELO  = 'llama-3.1-8b-instant';
+const API_URL = (typeof window !== 'undefined' && window.location && (window.location.origin.includes('localhost:3000') || window.location.origin.includes('127.0.0.1:3000')))
+    ? '/api/groq'
+    : 'http://localhost:3000/api/groq';
+const MODELO_PADRAO  = 'llama-3.1-8b-instant';
+
+function obterModelo() {
+    return localStorage.getItem('guia_model') || MODELO_PADRAO;
+}
+
+function obterHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
+    const customKey = localStorage.getItem('guia_api_key');
+    if (customKey) {
+        headers['Authorization'] = `Bearer ${customKey}`;
+    }
+    return headers;
+}
 
 // Tempo máximo de espera por resposta da API (ms)
 const API_TIMEOUT_MS = 30000;
@@ -157,7 +172,7 @@ class ErroGuIA extends Error {
 
 async function chamarAPI(promptUsuario) {
     const payload = {
-        model: MODELO,
+        model: obterModelo(),
         messages: [
             { role: 'system', content: SYSTEM_PROMPT },
             { role: 'user',   content: promptUsuario  }
@@ -168,7 +183,7 @@ async function chamarAPI(promptUsuario) {
 
     const resposta = await fetchComTimeout(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: obterHeaders(),
         body: JSON.stringify(payload)
     });
 
@@ -192,7 +207,7 @@ async function chamarAPI(promptUsuario) {
 
 async function chamarAPIChat(mensagens) {
     const payload = {
-        model: MODELO,
+        model: obterModelo(),
         messages: mensagens,
         temperature: 0.4,
         max_tokens: 600
@@ -200,7 +215,7 @@ async function chamarAPIChat(mensagens) {
 
     const resposta = await fetchComTimeout(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: obterHeaders(),
         body: JSON.stringify(payload)
     });
 

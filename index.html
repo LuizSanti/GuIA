@@ -33,13 +33,13 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#" id="nav-historico">
+                        <a href="javascript:showScreen('history')" id="nav-history">
                             <span class="material-symbols-outlined">history</span>
                             <span class="nav-label">Histórico</span>
                         </a>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="javascript:showScreen('settings')" id="nav-settings">
                             <span class="material-symbols-outlined">settings</span>
                             <span class="nav-label">Configurações</span>
                         </a>
@@ -52,7 +52,7 @@
             <h2>Conta</h2>
             <ul>
                 <li>
-                    <a href="#">
+                    <a href="javascript:showScreen('profile')" id="nav-profile">
                         <span class="material-symbols-outlined">account_circle</span>
                         <span class="nav-label">Perfil</span>
                     </a>
@@ -210,10 +210,302 @@
                     </aside>
                 </div>
             </div>
-            <div id="screen-history" class="screen-container" style="display: none;"></div>
+
+            <!-- TELA DE CONFIGURAÇÕES -->
+            <div id="screen-settings" class="screen-container" style="display: none;">
+                <div class="card">
+                    <div class="settings-header" style="margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 20px;">
+                        <h1 class="section-title" style="margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
+                            <span class="material-symbols-outlined" style="font-size: 28px; color: var(--teal);">settings</span>
+                            Configurações da GuIA
+                        </h1>
+                        <p style="color: var(--text-muted); font-size: 14px;">Ajuste as chaves de acesso, modelos de IA e preferências visuais do seu assistente educacional.</p>
+                    </div>
+
+                    <div class="settings-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
+                        
+                        <!-- Bloco 1: Provedor de IA -->
+                        <div class="settings-card" style="background: rgba(42, 124, 118, 0.02); border: 1px solid var(--border); border-radius: 10px; padding: 24px; display: flex; flex-direction: column; gap: 18px;">
+                            <h3 style="font-size: 16px; font-weight: 700; color: var(--teal); display: flex; align-items: center; gap: 8px;">
+                                <span class="material-symbols-outlined" style="font-size: 20px;">key</span>
+                                Provedor & Chave API
+                            </h3>
+                            
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                                <label for="settings-api-key" style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Chave API Groq</label>
+                                <div style="position: relative; display: flex; align-items: center;">
+                                    <input type="password" id="settings-api-key" placeholder="gsk_..." style="width: 100%; padding: 12px 40px 12px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--surface); color: var(--text); outline: none; transition: border-color 0.2s;">
+                                    <button type="button" id="btn-toggle-key" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center;">
+                                        <span class="material-symbols-outlined" style="font-size: 20px;">visibility</span>
+                                    </button>
+                                </div>
+                                <span style="font-size: 11px; color: var(--text-muted);">Sua chave é salva apenas localmente no seu navegador.</span>
+                            </div>
+
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                                <label for="settings-model" style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Modelo de IA</label>
+                                <select id="settings-model" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--surface); color: var(--text); outline: none; cursor: pointer;">
+                                    <option value="llama-3.1-8b-instant">Llama 3.1 8B (Rápido e Preciso)</option>
+                                    <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Alta Inteligência)</option>
+                                    <option value="mixtral-8x7b-32768">Mixtral 8x7B (Ideal para Listas)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Bloco 2: Preferências de Estudo -->
+                        <div class="settings-card" style="background: rgba(42, 124, 118, 0.02); border: 1px solid var(--border); border-radius: 10px; padding: 24px; display: flex; flex-direction: column; gap: 18px;">
+                            <h3 style="font-size: 16px; font-weight: 700; color: var(--teal); display: flex; align-items: center; gap: 8px;">
+                                <span class="material-symbols-outlined" style="font-size: 20px;">auto_stories</span>
+                                Preferências de Estudo
+                            </h3>
+
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                                <label for="settings-default-action" style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Ação Padrão</label>
+                                <select id="settings-default-action" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--surface); color: var(--text); outline: none; cursor: pointer;">
+                                    <option value="resumo">Resumir Texto</option>
+                                    <option value="quiz">Gerar Quiz</option>
+                                    <option value="pontos">Extrair Pontos-Chave</option>
+                                    <option value="questionario">Gerar Questionário</option>
+                                    <option value="revisao">Perguntas de Revisão</option>
+                                    <option value="simplificar">Simplificar Texto</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                                <label for="settings-chunk-size" style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: flex; justify-content: space-between;">
+                                    Tamanho do Fragmento (Chunk)
+                                    <span id="chunk-size-val" style="color: var(--teal); font-weight: 700;">4000 carac.</span>
+                                </label>
+                                <input type="range" id="settings-chunk-size" min="2000" max="8000" step="500" value="4000" style="width: 100%; accent-color: var(--teal); cursor: pointer;">
+                                <span style="font-size: 11px; color: var(--text-muted);">Fragmentos menores geram respostas mais focadas; maiores dão mais contexto global.</span>
+                            </div>
+                        </div>
+
+                        <!-- Bloco 3: Aparência & Tema -->
+                        <div class="settings-card" style="background: rgba(42, 124, 118, 0.02); border: 1px solid var(--border); border-radius: 10px; padding: 24px; display: flex; flex-direction: column; gap: 18px;">
+                            <h3 style="font-size: 16px; font-weight: 700; color: var(--teal); display: flex; align-items: center; gap: 8px;">
+                                <span class="material-symbols-outlined" style="font-size: 20px;">palette</span>
+                                Aparência & Tema
+                            </h3>
+
+                            <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                                <label style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Tema do Sistema</label>
+                                <div class="theme-options" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                                    
+                                    <div class="theme-option-card active" data-theme="default" style="border-radius: 8px; padding: 10px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; align-items: center; background: var(--surface);">
+                                        <span style="width: 20px; height: 20px; border-radius: 50%; background: #2a7c76; border: 1px solid rgba(0,0,0,0.1);"></span>
+                                        <span style="font-size: 11px; font-weight: 700; color: var(--text);">GuIA Clássico</span>
+                                    </div>
+                                    
+                                    <div class="theme-option-card" data-theme="dark" style="border-radius: 8px; padding: 10px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; align-items: center; background: var(--surface);">
+                                        <span style="width: 20px; height: 20px; border-radius: 50%; background: #131a1e; border: 1px solid rgba(0,0,0,0.1);"></span>
+                                        <span style="font-size: 11px; font-weight: 700; color: var(--text);">Modo Escuro</span>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="settings-actions" style="margin-top: 40px; display: flex; gap: 15px; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 20px;">
+                        <button type="button" id="btn-reset-settings" class="btn-outline" style="padding: 12px 24px;">Restaurar Padrões</button>
+                        <button type="button" id="btn-save-settings" class="btn-action" style="padding: 12px 28px; flex: none;">
+                            <span class="material-symbols-outlined">save</span>
+                            Salvar Configurações
+                        </button>
+                    </div>
+                    
+                    <div id="settings-feedback" style="display: none; margin-top: 20px; padding: 12px; background: #d4edda; border: 1px solid #c3e6cb; color: #155724; border-radius: 8px; align-items: center; justify-content: center; gap: 8px; text-align: center; font-size: 14px; font-weight: 700; animation: fadeIn 0.3s;">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        Configurações salvas com sucesso!
+                    </div>
+                </div>
+            </div>
+
+            <!-- TELA DO PERFIL -->
+            <div id="screen-profile" class="screen-container" style="display: none;">
+                <div class="card" style="display: flex; flex-direction: column; gap: 40px;">
+                    
+                    <!-- Topo do Perfil com Avatar e Info Básica -->
+                    <div class="profile-header-container" style="display: flex; flex-wrap: wrap; gap: 30px; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 30px; width: 100%;">
+                        <div class="profile-avatar-wrapper" style="position: relative;">
+                            <div id="profile-avatar-display" style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--teal), var(--teal-light)); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px; font-weight: 900; box-shadow: 0 4px 15px rgba(42, 124, 118, 0.3); border: 4px solid var(--surface);">
+                                M
+                            </div>
+                            <button type="button" id="btn-change-avatar" style="position: absolute; bottom: 0; right: 0; background: var(--teal); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: background 0.2s;">
+                                <span class="material-symbols-outlined" style="font-size: 18px; color: white;">edit</span>
+                            </button>
+                        </div>
+                        
+                        <div class="profile-title-wrapper" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                            <h1 id="profile-name-title" style="font-size: 26px; font-weight: 900; color: var(--text);">Mariana Silva</h1>
+                            <p id="profile-email-title" style="color: var(--text-muted); font-size: 14px; display: flex; align-items: center; gap: 6px; margin: 0;">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">mail</span>
+                                mariana@faculdade.edu.br
+                            </p>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px;">
+                                <span id="profile-course-badge" style="background: rgba(42, 124, 118, 0.1); color: var(--teal); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                                    <span class="material-symbols-outlined" style="font-size: 14px; color: var(--teal);">school</span>
+                                    Engenharia de Software
+                                </span>
+                                <span id="profile-univ-badge" style="background: #f1f5f9; color: #475569; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                                    <span class="material-symbols-outlined" style="font-size: 14px; color: #475569;">account_balance</span>
+                                    Universidade Federal
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estatísticas Acadêmicas e Informações de Conta -->
+                    <div class="profile-body-grid" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; width: 100%;">
+                        
+                        <!-- Formulário de Edição de Dados -->
+                        <div class="profile-details-card" style="display: flex; flex-direction: column; gap: 24px;">
+                            <h2 style="font-size: 18px; font-weight: 800; color: var(--text); border-left: 4px solid var(--teal); padding-left: 10px; line-height: 1; margin: 0;">
+                                Dados da Estudante
+                            </h2>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+                                <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label for="profile-name-input" style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Nome Completo</label>
+                                    <input type="text" id="profile-name-input" value="Mariana Silva" style="padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--surface); color: var(--text); outline: none;">
+                                </div>
+                                
+                                <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label for="profile-email-input" style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">E-mail Acadêmico</label>
+                                    <input type="email" id="profile-email-input" value="mariana@faculdade.edu.br" style="padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--surface); color: var(--text); outline: none;">
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+                                <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label for="profile-course-input" style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Curso / Graduação</label>
+                                    <input type="text" id="profile-course-input" value="Engenharia de Software" style="padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--surface); color: var(--text); outline: none;">
+                                </div>
+
+                                <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label for="profile-univ-input" style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Instituição de Ensino</label>
+                                    <input type="text" id="profile-univ-input" value="Universidade Federal" style="padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--surface); color: var(--text); outline: none;">
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 10px;">
+                                <button type="button" id="btn-save-profile" class="btn-action" style="padding: 12px 24px; flex: none;">
+                                    <span class="material-symbols-outlined">save</span>
+                                    Salvar Perfil
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Painel de Conquistas & Stats rápidos -->
+                        <div class="profile-stats-card" style="display: flex; flex-direction: column; gap: 24px; background: rgba(42, 124, 118, 0.02); border: 1px solid var(--border); border-radius: 12px; padding: 24px;">
+                            <h2 style="font-size: 18px; font-weight: 800; color: var(--teal); display: flex; align-items: center; gap: 8px; margin: 0;">
+                                <span class="material-symbols-outlined" style="color: var(--teal);">analytics</span>
+                                Métricas de Estudo
+                            </h2>
+
+                            <div class="stats-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div style="background: var(--surface); padding: 16px; border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center;">
+                                    <span class="material-symbols-outlined" style="color: var(--teal); font-size: 28px;">description</span>
+                                    <span id="stat-docs-val" style="font-size: 22px; font-weight: 900; color: var(--text);">0</span>
+                                    <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Docs Analisados</span>
+                                </div>
+
+                                <div style="background: var(--surface); padding: 16px; border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center;">
+                                    <span class="material-symbols-outlined" style="color: var(--teal); font-size: 28px;">bolt</span>
+                                    <span id="stat-actions-val" style="font-size: 22px; font-weight: 900; color: var(--text);">0</span>
+                                    <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Ações Realizadas</span>
+                                </div>
+
+                                <div style="background: var(--surface); padding: 16px; border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center;">
+                                    <span class="material-symbols-outlined" style="color: var(--teal); font-size: 28px;">translate</span>
+                                    <span id="stat-words-val" style="font-size: 22px; font-weight: 900; color: var(--text);">0</span>
+                                    <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Palavras Lidas</span>
+                                </div>
+
+                                <div style="background: var(--surface); padding: 16px; border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center;">
+                                    <span class="material-symbols-outlined" style="color: var(--teal); font-size: 28px;">hourglass_empty</span>
+                                    <span id="stat-time-val" style="font-size: 18px; font-weight: 900; color: var(--text);">0 min</span>
+                                    <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Tempo Salvo</span>
+                                </div>
+                            </div>
+
+                            <div class="profile-achievements-container" style="display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--border); padding-top: 20px;">
+                                <h3 style="font-size: 14px; font-weight: 800; color: var(--text); margin: 0; display: flex; align-items: center; gap: 6px;">
+                                    <span class="material-symbols-outlined" style="font-size: 20px; color: var(--teal);">emoji_events</span>
+                                    Medalhas da GuIA
+                                </h3>
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <div id="badge-primeiro-passo" class="achievement-badge" title="Medalha dada ao fazer o primeiro upload!" style="opacity: 0.3; filter: grayscale(1); display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border);">
+                                        <span class="material-symbols-outlined" style="font-size: 16px; color: var(--teal);">school</span>
+                                        <span style="font-size: 12px; font-weight: 700; color: var(--text);">Primeiro Passo</span>
+                                    </div>
+                                    <div id="badge-devorador" class="achievement-badge" title="Analise 5 ou mais documentos!" style="opacity: 0.3; filter: grayscale(1); display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border);">
+                                        <span class="material-symbols-outlined" style="font-size: 16px; color: var(--teal);">menu_book</span>
+                                        <span style="font-size: 12px; font-weight: 700; color: var(--text);">Devoradora</span>
+                                    </div>
+                                    <div id="badge-brilhante" class="achievement-badge" title="Gere pelo menos 5 ações!" style="opacity: 0.3; filter: grayscale(1); display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border);">
+                                        <span class="material-symbols-outlined" style="font-size: 16px; color: var(--teal);">psychology</span>
+                                        <span style="font-size: 12px; font-weight: 700; color: var(--text);">Mente Brilhante</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TELA DE HISTÓRICO -->
+            <div id="screen-history" class="screen-container" style="display: none;">
+                <div class="card">
+                    <div class="history-header" style="margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <h1 class="section-title" style="margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
+                                <span class="material-symbols-outlined" style="font-size: 28px; color: var(--teal);">history</span>
+                                Histórico de Estudos
+                            </h1>
+                            <p style="color: var(--text-muted); font-size: 14px; margin: 0;">Acesse rapidamente as análises e documentos gerados anteriormente por você.</p>
+                        </div>
+                        <button type="button" id="btn-clear-history" class="btn-action btn-danger" style="padding: 10px 18px; border: none; font-size: 11px; font-weight: 700; flex: none; color: white !important; display: flex; align-items: center; gap: 6px;">
+                            <span class="material-symbols-outlined" style="font-size: 16px; color: white !important;">delete</span>
+                            Limpar Histórico
+                        </button>
+                    </div>
+
+                    <div id="history-empty-state" style="padding: 60px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px;">
+                        <span class="material-symbols-outlined" style="font-size: 64px; color: var(--border-dashed);">folder_open</span>
+                        <h3 style="font-size: 18px; font-weight: 700; color: var(--text); margin: 0;">Histórico Vazio</h3>
+                        <p style="color: var(--text-muted); font-size: 14px; max-width: 400px; margin: 0;">Você ainda não processou nenhum documento. Faça o upload de um PDF ou TXT na tela inicial para começar!</p>
+                        <button type="button" onclick="showScreen('upload')" class="btn-action" style="padding: 12px 24px; margin-top: 10px; flex: none; width: auto;">
+                            <span class="material-symbols-outlined">upload_file</span>
+                            Novo Documento
+                        </button>
+                    </div>
+
+                    <div id="history-table-container" style="display: none; overflow-x: auto; width: 100%;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 600px;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--border); color: var(--text-muted); font-weight: 700;">
+                                    <th style="padding: 12px 16px;">Documento</th>
+                                    <th style="padding: 12px 16px;">Ação Realizada</th>
+                                    <th style="padding: 12px 16px;">Palavras</th>
+                                    <th style="padding: 12px 16px;">Data / Hora</th>
+                                    <th style="padding: 12px 16px; text-align: right;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body" style="color: var(--text);">
+                                <!-- Linhas dinâmicas inseridas por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
             <!-- US08/US09: histórico do chat fixo, sempre visível acima do input -->
-            <div class="chat-wrapper">
+            <div class="chat-wrapper" style="display: none;">
                 <div id="chat-historico" class="chat-historico" style="display:none;"></div>
                 <div class="prompt-bar">
                 <input type="text" placeholder="Pergunte algo sobre o documento..." id="promptInput">
