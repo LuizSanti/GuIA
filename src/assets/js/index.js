@@ -120,14 +120,83 @@ document.addEventListener('DOMContentLoaded', () => {
             if (promptInput) promptInput.focus();
         });
     }
-    const navHistorico = document.getElementById('nav-historico');
-     if (navHistorico) {
-         navHistorico.addEventListener('click', (e) => {
-             e.preventDefault();
-             window.GuIA.historico.renderizarTelaHistorico();
-             showScreen('history');
-         });
-     }
+    // --- INICIALIZAÇÃO DE PERFIL E CONFIGURAÇÕES NO DOM ---
+    
+    // Aplica o tema salvo logo na inicialização
+    const savedTheme = localStorage.getItem('guia_theme') || 'default';
+    aplicarTema(savedTheme);
+
+    // Event listeners para tela de configurações
+    document.querySelectorAll('.theme-option-card').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.theme-option-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+        });
+    });
+
+    const btnToggleKey = document.getElementById('btn-toggle-key');
+    const inputKey = document.getElementById('settings-api-key');
+    if (btnToggleKey && inputKey) {
+        btnToggleKey.addEventListener('click', () => {
+            const isPassword = inputKey.type === 'password';
+            inputKey.type = isPassword ? 'text' : 'password';
+            btnToggleKey.querySelector('.material-symbols-outlined').textContent = isPassword ? 'visibility_off' : 'visibility';
+        });
+    }
+
+    const btnSaveSettings = document.getElementById('btn-save-settings');
+    if (btnSaveSettings) {
+        btnSaveSettings.addEventListener('click', salvarConfiguracoes);
+    }
+
+    const btnResetSettings = document.getElementById('btn-reset-settings');
+    if (btnResetSettings) {
+        btnResetSettings.addEventListener('click', resetarConfiguracoes);
+    }
+
+    const sliderChunk = document.getElementById('settings-chunk-size');
+    const valChunk = document.getElementById('chunk-size-val');
+    if (sliderChunk && valChunk) {
+        sliderChunk.addEventListener('input', (e) => {
+            valChunk.textContent = e.target.value + ' carac.';
+        });
+    }
+
+    // Event listeners para tela de perfil
+    const btnSaveProfile = document.getElementById('btn-save-profile');
+    if (btnSaveProfile) {
+        btnSaveProfile.addEventListener('click', salvarPerfil);
+    }
+
+    const btnChangeAvatar = document.getElementById('btn-change-avatar');
+    if (btnChangeAvatar) {
+        btnChangeAvatar.addEventListener('click', () => {
+            const cores = [
+                'linear-gradient(135deg, var(--teal), var(--teal-light))',
+                'linear-gradient(135deg, #d97706, #f59e0b)',
+                'linear-gradient(135deg, #a855f7, #c084fc)',
+                'linear-gradient(135deg, #ef4444, #f87171)',
+                'linear-gradient(135deg, #3b82f6, #60a5fa)',
+                'linear-gradient(135deg, #10b981, #34d399)'
+            ];
+            const avatarDisplay = document.getElementById('profile-avatar-display');
+            if (avatarDisplay) {
+                let index = parseInt(localStorage.getItem('guia_avatar_color_idx') || '0', 10);
+                index = (index + 1) % cores.length;
+                localStorage.setItem('guia_avatar_color_idx', index);
+                avatarDisplay.style.background = cores[index];
+            }
+        });
+    }
+
+    const btnClearHistory = document.getElementById('btn-clear-history');
+    if (btnClearHistory) {
+        btnClearHistory.addEventListener('click', () => {
+            if (confirm('Tem certeza que deseja limpar todo o seu histórico de estudos?')) {
+                window.GuIA.historico.limparHistorico();
+            }
+        });
+    }
 });
 
 // ─── Processamento ────────────────────────────────────────────────────────────
@@ -167,6 +236,9 @@ async function iniciarProcessamento() {
         renderizarResultado(resultadoFinal, acaoAtual);
         showScreen('results');
         window.GuIA.historico.adicionarEntrada(state, acaoAtual, resultadoFinal);
+        
+        // Incrementa as estatísticas e medalhas da estudante
+        incrementarMetricas(state, resultadoFinal);
 
     } catch (erro) {
         console.error('[GuIA]', erro);
@@ -192,6 +264,30 @@ function showScreen(screenId) {
         }
     }
 
+    // --- ATUALIZAR NAVEGAÇÃO ATIVA ---
+    document.querySelectorAll('.menu a').forEach(a => a.classList.remove('active'));
+    const activeLink = document.getElementById(`nav-${screenId}`);
+    if (activeLink) activeLink.classList.add('active');
+
+    // --- EXIBIR/OCULTAR CHAT CONTEXTUAL ---
+    const chatWrapper = document.querySelector('.chat-wrapper');
+    if (chatWrapper) {
+        if (screenId === 'results') {
+            chatWrapper.style.display = 'flex';
+        } else {
+            chatWrapper.style.display = 'none';
+        }
+    }
+
+    // --- CARREGAR DADOS DINÂMICOS DA TELA ---
+    if (screenId === 'settings') {
+        carregarConfiguracoes();
+    } else if (screenId === 'profile') {
+        carregarPerfil();
+    } else if (screenId === 'history') {
+        window.GuIA.historico.renderizarTelaHistorico();
+    }
+
     // Ao voltar para upload, limpa o chat e o arquivo selecionado
     if (screenId === 'upload') {
         const historico = document.getElementById('chat-historico');
@@ -201,6 +297,238 @@ function showScreen(screenId) {
         }
     }
 }
+
+// ─── Métodos e Funções Auxiliares de Configurações, Perfil e Temas ──────────────
+
+function aplicarTema(theme) {
+    document.body.className = '';
+    if (theme !== 'default') {
+        document.body.classList.add(`theme-${theme}`);
+    }
+}
+
+function carregarConfiguracoes() {
+    const inputKey = document.getElementById('settings-api-key');
+    const selectModel = document.getElementById('settings-model');
+    const selectAction = document.getElementById('settings-default-action');
+    const sliderChunk = document.getElementById('settings-chunk-size');
+    const valChunk = document.getElementById('chunk-size-val');
+
+    if (inputKey) inputKey.value = localStorage.getItem('guia_api_key') || '';
+    if (selectModel) selectModel.value = localStorage.getItem('guia_model') || 'llama-3.1-8b-instant';
+    if (selectAction) selectAction.value = localStorage.getItem('guia_default_action') || 'resumo';
+    
+    const chunkVal = localStorage.getItem('guia_chunk_size') || '4000';
+    if (sliderChunk) sliderChunk.value = chunkVal;
+    if (valChunk) valChunk.textContent = chunkVal + ' carac.';
+
+    const theme = localStorage.getItem('guia_theme') || 'default';
+    document.querySelectorAll('.theme-option-card').forEach(card => {
+        card.classList.remove('active');
+        if (card.dataset.theme === theme) {
+            card.classList.add('active');
+        }
+    });
+}
+
+function salvarConfiguracoes() {
+    const inputKey = document.getElementById('settings-api-key');
+    const selectModel = document.getElementById('settings-model');
+    const selectAction = document.getElementById('settings-default-action');
+    const sliderChunk = document.getElementById('settings-chunk-size');
+    const activeThemeCard = document.querySelector('.theme-option-card.active');
+
+    if (inputKey) localStorage.setItem('guia_api_key', inputKey.value.trim());
+    if (selectModel) localStorage.setItem('guia_model', selectModel.value);
+    if (selectAction) localStorage.setItem('guia_default_action', selectAction.value);
+    if (sliderChunk) localStorage.setItem('guia_chunk_size', sliderChunk.value);
+    
+    if (activeThemeCard) {
+        const theme = activeThemeCard.dataset.theme;
+        localStorage.setItem('guia_theme', theme);
+        aplicarTema(theme);
+    }
+
+    const feedback = document.getElementById('settings-feedback');
+    if (feedback) {
+        feedback.style.display = 'flex';
+        setTimeout(() => {
+            feedback.style.display = 'none';
+        }, 3000);
+    }
+}
+
+function resetarConfiguracoes() {
+    if (confirm('Deseja restaurar todas as configurações para os padrões de fábrica?')) {
+        localStorage.removeItem('guia_api_key');
+        localStorage.removeItem('guia_model');
+        localStorage.removeItem('guia_default_action');
+        localStorage.removeItem('guia_chunk_size');
+        localStorage.removeItem('guia_theme');
+        aplicarTema('default');
+        carregarConfiguracoes();
+    }
+}
+
+function carregarPerfil() {
+    const txtNameTitle = document.getElementById('profile-name-title');
+    const txtEmailTitle = document.getElementById('profile-email-title');
+    const badgeCourse = document.getElementById('profile-course-badge');
+    const badgeUniv = document.getElementById('profile-univ-badge');
+    const avatarDisplay = document.getElementById('profile-avatar-display');
+
+    const inputName = document.getElementById('profile-name-input');
+    const inputEmail = document.getElementById('profile-email-input');
+    const inputCourse = document.getElementById('profile-course-input');
+    const inputUniv = document.getElementById('profile-univ-input');
+
+    // Dados básicos
+    const name = localStorage.getItem('guia_profile_name') || 'Mariana Silva';
+    const email = localStorage.getItem('guia_profile_email') || 'mariana@faculdade.edu.br';
+    const course = localStorage.getItem('guia_profile_course') || 'Engenharia de Software';
+    const univ = localStorage.getItem('guia_profile_univ') || 'Universidade Federal';
+
+    if (txtNameTitle) txtNameTitle.textContent = name;
+    if (txtEmailTitle) {
+        txtEmailTitle.innerHTML = `<span class="material-symbols-outlined" style="font-size: 16px;">mail</span>${email}`;
+    }
+    if (badgeCourse) {
+        badgeCourse.innerHTML = `<span class="material-symbols-outlined" style="font-size: 14px; color: var(--teal);">school</span>${course}`;
+    }
+    if (badgeUniv) {
+        badgeUniv.innerHTML = `<span class="material-symbols-outlined" style="font-size: 14px; color: #475569;">account_balance</span>${univ}`;
+    }
+    if (avatarDisplay) {
+        avatarDisplay.textContent = name.charAt(0).toUpperCase();
+        
+        // Recupera cor de fundo do avatar
+        const cores = [
+            'linear-gradient(135deg, var(--teal), var(--teal-light))',
+            'linear-gradient(135deg, #d97706, #f59e0b)',
+            'linear-gradient(135deg, #a855f7, #c084fc)',
+            'linear-gradient(135deg, #ef4444, #f87171)',
+            'linear-gradient(135deg, #3b82f6, #60a5fa)',
+            'linear-gradient(135deg, #10b981, #34d399)'
+        ];
+        const index = parseInt(localStorage.getItem('guia_avatar_color_idx') || '0', 10);
+        avatarDisplay.style.background = cores[index];
+    }
+
+    if (inputName) inputName.value = name;
+    if (inputEmail) inputEmail.value = email;
+    if (inputCourse) inputCourse.value = course;
+    if (inputUniv) inputUniv.value = univ;
+
+    // Métricas
+    const docs = parseInt(localStorage.getItem('guia_stats_docs') || '0', 10);
+    const actions = parseInt(localStorage.getItem('guia_stats_actions') || '0', 10);
+    const words = parseInt(localStorage.getItem('guia_stats_words') || '0', 10);
+
+    const valDocs = document.getElementById('stat-docs-val');
+    const valActions = document.getElementById('stat-actions-val');
+    const valWords = document.getElementById('stat-words-val');
+    const valTime = document.getElementById('stat-time-val');
+
+    if (valDocs) valDocs.textContent = docs;
+    if (valActions) valActions.textContent = actions;
+    if (valWords) valWords.textContent = words > 1000 ? (words / 1000).toFixed(1) + 'k' : words;
+    
+    // Cálculo fofo de tempo economizado (15 minutos economizados por ação estudantil da GuIA!)
+    if (valTime) {
+        const tempoMinutos = actions * 15;
+        if (tempoMinutos >= 60) {
+            const horas = (tempoMinutos / 60).toFixed(1);
+            valTime.textContent = horas + ' horas';
+        } else {
+            valTime.textContent = tempoMinutos + ' min';
+        }
+    }
+
+    // Medalhas
+    const badgePrimeiro = document.getElementById('badge-primeiro-passo');
+    const badgeDevorador = document.getElementById('badge-devorador');
+    const badgeBrilhante = document.getElementById('badge-brilhante');
+
+    if (badgePrimeiro) {
+        if (docs >= 1) {
+            badgePrimeiro.classList.add('active');
+            badgePrimeiro.style.opacity = '1';
+            badgePrimeiro.style.filter = 'none';
+        } else {
+            badgePrimeiro.classList.remove('active');
+            badgePrimeiro.style.opacity = '0.3';
+            badgePrimeiro.style.filter = 'grayscale(1)';
+        }
+    }
+
+    if (badgeDevorador) {
+        if (docs >= 5) {
+            badgeDevorador.classList.add('active');
+            badgeDevorador.style.opacity = '1';
+            badgeDevorador.style.filter = 'none';
+        } else {
+            badgeDevorador.classList.remove('active');
+            badgeDevorador.style.opacity = '0.3';
+            badgeDevorador.style.filter = 'grayscale(1)';
+        }
+    }
+
+    if (badgeBrilhante) {
+        if (actions >= 5) {
+            badgeBrilhante.classList.add('active');
+            badgeBrilhante.style.opacity = '1';
+            badgeBrilhante.style.filter = 'none';
+        } else {
+            badgeBrilhante.classList.remove('active');
+            badgeBrilhante.style.opacity = '0.3';
+            badgeBrilhante.style.filter = 'grayscale(1)';
+        }
+    }
+}
+
+function salvarPerfil() {
+    const inputName = document.getElementById('profile-name-input');
+    const inputEmail = document.getElementById('profile-email-input');
+    const inputCourse = document.getElementById('profile-course-input');
+    const inputUniv = document.getElementById('profile-univ-input');
+
+    if (inputName) localStorage.setItem('guia_profile_name', inputName.value.trim());
+    if (inputEmail) localStorage.setItem('guia_profile_email', inputEmail.value.trim());
+    if (inputCourse) localStorage.setItem('guia_profile_course', inputCourse.value.trim());
+    if (inputUniv) localStorage.setItem('guia_profile_univ', inputUniv.value.trim());
+
+    carregarPerfil();
+    alert('Perfil atualizado com sucesso!');
+}
+
+function incrementarMetricas(state, resultado) {
+    // 1. Incrementa total de ações realizadas
+    const acoes = parseInt(localStorage.getItem('guia_stats_actions') || '0', 10) + 1;
+    localStorage.setItem('guia_stats_actions', acoes);
+
+    // 2. Incrementa total de palavras lidas
+    const totalPalavras = resultado ? resultado.split(/\s+/).filter(Boolean).length : 0;
+    const palavrasAnteriores = parseInt(localStorage.getItem('guia_stats_words') || '0', 10);
+    localStorage.setItem('guia_stats_words', palavrasAnteriores + totalPalavras);
+
+    // 3. Incrementa documentos analisados (apenas se for inédito)
+    try {
+        const docsVistos = JSON.parse(localStorage.getItem('guia_docs_vistos') || '[]');
+        if (!docsVistos.includes(state.fileName)) {
+            docsVistos.push(state.fileName);
+            localStorage.setItem('guia_docs_vistos', JSON.stringify(docsVistos));
+            
+            const docs = parseInt(localStorage.getItem('guia_stats_docs') || '0', 10) + 1;
+            localStorage.setItem('guia_stats_docs', docs);
+        }
+    } catch {
+        // Fallback robusto caso localStorage corrompa
+        const docs = parseInt(localStorage.getItem('guia_stats_docs') || '0', 10) + 1;
+        localStorage.setItem('guia_stats_docs', docs);
+    }
+}
+
+
 
 function atualizarTelaProcessamento(fileName, atual, total) {
     const pct    = total > 0 ? Math.round((atual / total) * 100) : 0;

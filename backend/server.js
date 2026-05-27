@@ -25,10 +25,23 @@ app.use(express.static(path.join(__dirname, '..')));
 // O frontend manda o payload normalmente (model, messages, temperature…),
 // mas SEM Authorization. O servidor injeta a chave antes de repassar à Groq.
 app.post('/api/groq', async (req, res) => {
-    const apiKey = process.env.GROQ_API_KEY;
+    // 1. Tenta obter a chave enviada pelo cliente via cabeçalho Authorization
+    let apiKey = req.headers['authorization'] || req.headers['Authorization'];
+    
+    // Se o cliente mandou "Bearer gsk_...", remove o prefixo "Bearer "
+    if (apiKey && apiKey.startsWith('Bearer ')) {
+        apiKey = apiKey.slice(7).trim();
+    }
+    
+    // 2. Se o cliente não mandou chave, usa a do servidor (.env ou ambiente da Azure)
+    if (!apiKey) {
+        apiKey = process.env.GROQ_API_KEY;
+    }
 
     if (!apiKey) {
-        return res.status(500).json({ error: 'GROQ_API_KEY não configurada no servidor.' });
+        return res.status(401).json({ 
+            error: 'Nenhuma chave API Groq configurada. Por favor, forneça uma chave nas Configurações da GuIA ou configure GROQ_API_KEY no servidor.' 
+        });
     }
 
     try {

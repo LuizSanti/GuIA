@@ -95,89 +95,95 @@ function formatarTamanho(bytes) {
 
 // ─── Renderização da tela de histórico ───────────────────────────────────────
 
+const CORES_BADGE = {
+    resumo:       'background: rgba(42, 124, 118, 0.1); color: var(--teal); border: 1px solid rgba(42, 124, 118, 0.2);',
+    quiz:         'background: rgba(59, 130, 246, 0.1); color: #2563eb; border: 1px solid rgba(59, 130, 246, 0.2);',
+    pontos:       'background: rgba(245, 158, 11, 0.1); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.2);',
+    questionario: 'background: rgba(139, 92, 246, 0.1); color: #7c3aed; border: 1px solid rgba(139, 92, 246, 0.2);',
+    revisao:      'background: rgba(6, 182, 212, 0.1); color: #0891b2; border: 1px solid rgba(6, 182, 212, 0.2);',
+    simplificar:  'background: rgba(99, 102, 241, 0.1); color: #4f46e5; border: 1px solid rgba(99, 102, 241, 0.2);',
+};
+
 /**
  * Monta e exibe a tela de histórico no #screen-history.
  * Chamado ao clicar no botão "Histórico" do menu lateral.
  */
 function renderizarTelaHistorico() {
-    const container = document.getElementById('screen-history');
-    if (!container) return;
+    const emptyState = document.getElementById('history-empty-state');
+    const tableContainer = document.getElementById('history-table-container');
+    const tableBody = document.getElementById('history-table-body');
+    
+    if (!tableBody) return;
 
     const lista = carregarHistorico();
 
     if (lista.length === 0) {
-        container.innerHTML = `
-            <div class="card card-center">
-                <span class="material-symbols-outlined" style="font-size:48px;color:var(--text-muted)">history</span>
-                <h2 style="color:var(--text-muted);font-size:16px;font-weight:600;margin-top:12px;">
-                    Nenhum documento processado ainda
-                </h2>
-                <p style="color:var(--text-muted);font-size:14px;">
-                    Faça o upload de um arquivo e processe-o para vê-lo aqui.
-                </p>
-            </div>
-        `;
+        if (emptyState) emptyState.style.display = 'flex';
+        if (tableContainer) tableContainer.style.display = 'none';
         return;
     }
 
-    const itens = lista.map(entrada => `
-        <div class="historico-item" data-id="${entrada.id}">
-            <div class="historico-item__icone historico-item__icone--${entrada.fileType}">
-                <span class="material-symbols-outlined">
-                    ${entrada.fileType === 'pdf' ? 'picture_as_pdf' : 'text_snippet'}
-                </span>
-            </div>
-            <div class="historico-item__info">
-                <span class="historico-item__nome" title="${entrada.fileName}">
-                    ${entrada.fileName}
-                </span>
-                <span class="historico-item__meta">
-                    ${LABEL_ACAO[entrada.acao] || entrada.acao}
-                    &nbsp;·&nbsp;
-                    ${formatarTamanho(entrada.fileSize)}
-                    &nbsp;·&nbsp;
-                    ${formatarData(entrada.data)}
-                </span>
-            </div>
-            <div class="historico-item__acoes">
-                <button
-                    class="btn-action"
-                    style="min-width:unset;padding:8px 16px;font-size:11px;"
-                    onclick="window.GuIA.historico.restaurarEntrada(${entrada.id})"
-                >
-                    Ver resultado
-                </button>
-                <button
-                    class="btn-outline"
-                    style="padding:8px 12px;"
-                    title="Remover do histórico"
-                    onclick="window.GuIA.historico.removerEntrada(${entrada.id})"
-                >
-                    <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
-                </button>
-            </div>
-        </div>
-    `).join('');
+    if (emptyState) emptyState.style.display = 'none';
+    if (tableContainer) tableContainer.style.display = 'block';
 
-    container.innerHTML = `
-        <div class="card">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
-                <h1 style="font-size:18px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;color:var(--text);">
-                    Histórico
-                </h1>
-                <button
-                    class="btn-outline"
-                    style="padding:8px 16px;font-size:11px;"
-                    onclick="window.GuIA.historico.limparHistorico()"
-                >
-                    Limpar tudo
-                </button>
-            </div>
-            <div class="historico-lista">
-                ${itens}
-            </div>
-        </div>
-    `;
+    tableBody.innerHTML = lista.map(entrada => {
+        // Estima a contagem de palavras do resultado para mostrar na tabela
+        const totalPalavras = entrada.resultado ? entrada.resultado.split(/\s+/).filter(Boolean).length : 0;
+        const badgeEstilo = CORES_BADGE[entrada.acao] || 'background: rgba(100, 116, 139, 0.1); color: #64748b;';
+
+        return `
+            <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 16px; font-weight: 600; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="material-symbols-outlined" style="color: var(--teal); font-size: 20px;">
+                            ${entrada.fileType === 'pdf' ? 'picture_as_pdf' : 'text_snippet'}
+                        </span>
+                        <span title="${entrada.fileName}">${entrada.fileName}</span>
+                    </div>
+                </td>
+                <td style="padding: 16px;">
+                    <span style="padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; display: inline-block; ${badgeEstilo}">
+                        ${LABEL_ACAO[entrada.acao] || entrada.acao}
+                    </span>
+                </td>
+                <td style="padding: 16px; font-weight: 500; color: var(--text-muted); font-size: 13px;">
+                    ${totalPalavras} palavras
+                </td>
+                <td style="padding: 16px; color: var(--text-muted); font-size: 13px;">
+                    ${formatarData(entrada.data)}
+                </td>
+                <td style="padding: 16px; text-align: right;">
+                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                        <button
+                            class="btn-action"
+                            style="min-width: unset; padding: 6px 12px; font-size: 11px; display: flex; align-items: center; gap: 4px;"
+                            onclick="window.GuIA.historico.restaurarEntrada(${entrada.id})"
+                            title="Visualizar este resultado na tela principal"
+                        >
+                            <span class="material-symbols-outlined" style="font-size: 14px;">visibility</span>
+                            Ver
+                        </button>
+                        <button
+                            class="btn-outline"
+                            style="padding: 6px 10px; display: flex; align-items: center; justify-content: center;"
+                            onclick="window.GuIA.historico.baixarEntrada(${entrada.id})"
+                            title="Baixar PDF do resultado"
+                        >
+                            <span class="material-symbols-outlined" style="font-size: 14px;">download</span>
+                        </button>
+                        <button
+                            class="btn-action btn-danger"
+                            style="min-width: unset; padding: 6px 10px; display: flex; align-items: center; justify-content: center; border: none; color: white !important; background: #ef4444 !important;"
+                            onclick="window.GuIA.historico.removerEntrada(${entrada.id})"
+                            title="Excluir entrada"
+                        >
+                            <span class="material-symbols-outlined" style="font-size: 14px; color: white !important;">delete</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 /**
@@ -200,11 +206,43 @@ function restaurarEntrada(id) {
     window.GuIA.uploadState.fileName = entrada.fileName;
     window.GuIA.uploadState.fileType = entrada.fileType;
     window.GuIA.uploadState.fileSize = entrada.fileSize;
-    // chunks não é restaurado — o chat precisará de novo upload para funcionar
+    // Chunks não restaurado — chat contextual solicitará novo upload para funcionamento
+    
+    // Atualiza a acaoAtual global para que o cabeçalho do PDF seja correto
+    acaoAtual = entrada.acao;
 
     // Renderiza o resultado e vai para a tela
     renderizarResultado(entrada.resultado, entrada.acao);
     showScreen('results');
+}
+
+/**
+ * Permite baixar o PDF diretamente do histórico sem afetar a tela ativa
+ * @param {number} id
+ */
+function baixarEntrada(id) {
+    const lista = carregarHistorico();
+    const entrada = lista.find(e => e.id === id);
+    if (!entrada) return;
+
+    // Guarda temporariamente as variáveis globais
+    const acaoAnterior = acaoAtual;
+    const uploadStateAnterior = window.GuIA.uploadState;
+
+    // Substitui temporariamente para o gerador de PDF
+    acaoAtual = entrada.acao;
+    window.GuIA.uploadState = {
+        fileName: entrada.fileName,
+        fileType: entrada.fileType,
+        fileSize: entrada.fileSize
+    };
+
+    // Invoca a biblioteca jsPDF configurada no index.js
+    gerarPDF(entrada.resultado);
+
+    // Restaura os valores anteriores imediatamente
+    acaoAtual = acaoAnterior;
+    window.GuIA.uploadState = uploadStateAnterior;
 }
 
 // ─── Exposição global ─────────────────────────────────────────────────────────
@@ -215,5 +253,6 @@ window.GuIA.historico = {
     removerEntrada,
     limparHistorico,
     restaurarEntrada,
+    baixarEntrada,
     renderizarTelaHistorico,
 };
