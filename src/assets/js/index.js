@@ -108,29 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const promptInput = document.getElementById('promptInput');
     const micBtn      = document.getElementById('micBtn');
 
-function atualizarVisibilidadeSidebar(acao) {
-    const mapa = {
-        'sidebar-btn-quiz':         'quiz',
-        'sidebar-btn-pontos':       'pontos',
-        'sidebar-btn-questionario': 'questionario',
-        'sidebar-btn-revisao':      'revisao',
-        'sidebar-btn-simplificar':  'simplificar',
-    };
-
-    Object.entries(mapa).forEach(([id, acaoBotao]) => {
-        const btn = document.getElementById(id);
-        if (!btn) return;
-        // Oculta o botão da ação atual, mostra os demais
-        btn.style.display = acaoBotao === acao ? 'none' : '';
-    });
-
-    // Se a ação atual não for resumo, mostra o botão de gerar resumo na sidebar
-    const btnResumoSidebar = document.getElementById('sidebar-btn-resumo');
-    if (btnResumoSidebar) {
-        btnResumoSidebar.style.display = acao === 'resumo' ? 'none' : '';
-    }
-}
-
     if (promptInput) {
         promptInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -224,6 +201,29 @@ function atualizarVisibilidadeSidebar(acao) {
         });
     }
 });
+
+function atualizarVisibilidadeSidebar(acao) {
+    const mapa = {
+        'sidebar-btn-quiz':         'quiz',
+        'sidebar-btn-pontos':       'pontos',
+        'sidebar-btn-questionario': 'questionario',
+        'sidebar-btn-revisao':      'revisao',
+        'sidebar-btn-simplificar':  'simplificar',
+    };
+
+    Object.entries(mapa).forEach(([id, acaoBotao]) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        // Oculta o botão da ação atual, mostra os demais
+        btn.style.display = acaoBotao === acao ? 'none' : '';
+    });
+
+    // Se a ação atual não for resumo, mostra o botão de gerar resumo na sidebar
+    const btnResumoSidebar = document.getElementById('sidebar-btn-resumo');
+    if (btnResumoSidebar) {
+        btnResumoSidebar.style.display = acao === 'resumo' ? 'none' : '';
+    }
+}
 
 // ─── Processamento ────────────────────────────────────────────────────────────
 //
