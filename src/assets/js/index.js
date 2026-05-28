@@ -220,9 +220,9 @@ function atualizarVisibilidadeSidebar(acao) {
 
     // Se a ação atual não for resumo, mostra o botão de gerar resumo na sidebar
     const btnResumoSidebar = document.getElementById('sidebar-btn-resumo');
-    if (btnResumoSidebar) {
-        btnResumoSidebar.style.display = acao === 'resumo' ? 'none' : '';
-    }
+    // if (btnResumoSidebar) {
+    //     btnResumoSidebar.style.display = acao === 'resumo' ? 'none' : '';
+    // }
 }
 
 // ─── Processamento ────────────────────────────────────────────────────────────
