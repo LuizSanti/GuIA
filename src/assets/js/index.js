@@ -287,6 +287,8 @@ function atualizarBotaoBaixar(acao) {
     const btnResumo = document.getElementById('sidebar-btn-resumo');
     if (!btnResumo) return;
 
+    btnResumo.classList.add('btn-danger-custom');
+
     const label = btnResumo.querySelector('.btn-label');
 
     if (acao === 'resumo') {
