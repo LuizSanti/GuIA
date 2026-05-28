@@ -212,16 +212,21 @@ function atualizarVisibilidadeSidebar(acao) {
         'sidebar-btn-simplificar':  'simplificar',
     };
 
-    Object.entries(mapa).forEach(([id, acaoBotao]) => {
+    Object.keys(mapa).forEach((id) => {
         const btn = document.getElementById(id);
         if (!btn) return;
 
+        // Recupera o valor da ação correspondente ao ID
+        const valorAcao = mapa[id]; 
+
+        // Garante que o botão esteja sempre visível
         btn.style.display = 'flex';
-        // Oculta o botão da ação atual, mostra os demais
+
+        // Aplica ou remove o destaque
         if (valorAcao === acao) {
-            btn.classList.add('btn-ativo'); // Adiciona destaque
+            btn.classList.add('btn-ativo');
         } else {
-            btn.classList.remove('btn-ativo'); // Remove destaque
+            btn.classList.remove('btn-ativo');
         }
     });
 
