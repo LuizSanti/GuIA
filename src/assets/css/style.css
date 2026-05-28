@@ -332,6 +332,18 @@ main {
     color: var(--teal);
 }
 
+.btn-danger-custom {
+    background-color: #ef4444 !important;
+}
+
+.btn-danger-custom:hover {
+    background-color: #dc2626 !important;
+}
+
+.btn-danger-custom .btn-download-icon {
+    color: white;
+}
+
 .upload-hint {
     font-size: 14px;
     color: var(--text-muted);
