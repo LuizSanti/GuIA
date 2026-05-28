@@ -627,6 +627,15 @@ main {
     padding: 14px 16px; /* Ajuste cirúrgico para caber perfeitamente no menu lateral */
 }
 
+.btn-ativo {
+    border: 2px solid #ffffff !important; 
+    opacity: 0.8; 
+    background-color: var(--teal-dark) !important;
+    transform: scale(1.02); /* Leve efeito de aumento */
+    box-shadow: 0 0 8px rgba(0,0,0,0.3);
+    transition: all 0.2s ease;
+}
+
 /* ==========================================================================
    PROMPT BAR PERSISTENTE (MANTIDO 100% INTACTO)
    ========================================================================== */

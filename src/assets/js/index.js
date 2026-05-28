@@ -204,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function atualizarVisibilidadeSidebar(acao) {
     const mapa = {
+        'sidebar-btn-resumo':       'resumo',
         'sidebar-btn-quiz':         'quiz',
         'sidebar-btn-pontos':       'pontos',
         'sidebar-btn-questionario': 'questionario',
@@ -214,8 +215,14 @@ function atualizarVisibilidadeSidebar(acao) {
     Object.entries(mapa).forEach(([id, acaoBotao]) => {
         const btn = document.getElementById(id);
         if (!btn) return;
+
+        btn.style.display = 'flex';
         // Oculta o botão da ação atual, mostra os demais
-        btn.style.display = acaoBotao === acao ? 'none' : '';
+        if (valorAcao === acao) {
+            btn.classList.add('btn-ativo'); // Adiciona destaque
+        } else {
+            btn.classList.remove('btn-ativo'); // Remove destaque
+        }
     });
 
     // Se a ação atual não for resumo, mostra o botão de gerar resumo na sidebar
