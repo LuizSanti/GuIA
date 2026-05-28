@@ -253,6 +253,7 @@ async function iniciarProcessamento() {
 
 function atualizarVisibilidadeSidebar(acao) {
     const mapa = {
+        'sidebar-btn-resumo':       'resumo',
         'sidebar-btn-quiz':         'quiz',
         'sidebar-btn-pontos':       'pontos',
         'sidebar-btn-questionario': 'questionario',
@@ -263,15 +264,20 @@ function atualizarVisibilidadeSidebar(acao) {
     Object.entries(mapa).forEach(([id, acaoBotao]) => {
         const btn = document.getElementById(id);
         if (!btn) return;
-        // Oculta o botão da ação atual, mostra os demais
-        btn.style.display = acaoBotao === acao ? 'none' : '';
-    });
 
-    // Se a ação atual não for resumo, mostra o botão de gerar resumo na sidebar
-    const btnResumoSidebar = document.getElementById('sidebar-btn-resumo');
-    if (btnResumoSidebar) {
-        btnResumoSidebar.style.display = acao === 'resumo' ? 'none' : '';
-    }
+        if (acaoBotao === acao) {
+            // Oculta só o label (não o ícone de download)
+            const label = btn.querySelector('.btn-label');
+            if (label) label.style.display = 'none';
+            btn.style.pointerEvents = 'none'; // desativa clique no label
+            btn.style.justifyContent = 'flex-end'; // empurra o ícone pra direita
+        } else {
+            const label = btn.querySelector('.btn-label');
+            if (label) label.style.display = '';
+            btn.style.pointerEvents = '';
+            btn.style.justifyContent = '';
+        }
+    });
 }
 
 function atualizarBotaoBaixar(acao) {
@@ -312,7 +318,8 @@ function showScreen(screenId) {
     if (contentArea) {
         if (screenId === 'results') {
             contentArea.style.justifyContent = 'flex-start';
-            contentArea.style.overflow = 'hidden';
+            contentArea.style.overflow = '';
+            contentArea.style.overflowY = 'auto';
         } else {
             contentArea.style.justifyContent = 'center';
             contentArea.style.overflowY = 'auto';
