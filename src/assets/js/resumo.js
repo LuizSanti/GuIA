@@ -8,10 +8,7 @@
 'use strict';
 
 // Chama o proxy do servidor — a chave fica no .env do backend, nunca exposta.
-const API_URL = (typeof window !== 'undefined' && window.location && (window.location.origin.includes('localhost:3000') || window.location.origin.includes('127.0.0.1:3000')))
-    ? '/api/groq'
-    : 'http://localhost:3000/api/groq';
-const MODELO_PADRAO  = 'llama-3.1-8b-instant';
+const API_URL = '/api/groq';
 
 function obterModelo() {
     return localStorage.getItem('guia_model') || MODELO_PADRAO;
