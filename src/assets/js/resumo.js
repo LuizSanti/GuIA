@@ -9,6 +9,7 @@
 
 // Chama o proxy do servidor — a chave fica no .env do backend, nunca exposta.
 const API_URL = '/api/groq';
+const MODELO_PADRAO = 'llama-3.1-8b-instant';
 
 function obterModelo() {
     return localStorage.getItem('guia_model') || MODELO_PADRAO;
