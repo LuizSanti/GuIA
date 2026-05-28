@@ -216,14 +216,11 @@ function atualizarVisibilidadeSidebar(acao) {
         const btn = document.getElementById(id);
         if (!btn) return;
 
-        // Recupera o valor da ação correspondente ao ID
-        const valorAcao = mapa[id]; 
-
         // Garante que o botão esteja sempre visível
         btn.style.display = 'flex';
 
         // Aplica ou remove o destaque
-        if (valorAcao === acao) {
+        if (mapa[id] === acao) {
             btn.classList.add('btn-ativo');
         } else {
             btn.classList.remove('btn-ativo');
@@ -287,29 +284,27 @@ async function iniciarProcessamento() {
 }
 
 function atualizarBotaoBaixar(acao) {
-    const btnBaixar = document.getElementById('sidebar-btn-baixar');
-    if (!btnBaixar) return;
+    const btnResumo = document.getElementById('sidebar-btn-resumo');
+    if (!btnResumo) return;
 
-    const labels = {
-        resumo:       'BAIXAR RESUMO',
-        quiz:         'BAIXAR QUIZ',
-        pontos:       'BAIXAR PONTOS-CHAVE',
-        questionario: 'BAIXAR QUESTIONÁRIO',
-        revisao:      'BAIXAR PERGUNTAS DE REVISÃO',
-        simplificar:  'BAIXAR TEXTO SIMPLIFICADO',
-    };
+    const label = btnResumo.querySelector('.btn-label');
 
-    btnBaixar.dataset.acaoAtual = acao;
-
-    const label = btnBaixar.querySelector('.btn-label') || btnBaixar;
-    const texto = labels[acao] || 'BAIXAR RESULTADO';
-
-    // Atualiza o texto preservando o ícone de download se existir
-    const icone = btnBaixar.querySelector('.material-symbols-outlined');
-    if (icone) {
-        label.textContent = texto;
+    if (acao === 'resumo') {
+        label.innerText = 'BAIXAR RESUMO';
+        btnResumo.onclick = () => {
+            const texto = window.GuIA.resultadosPorAcao?.['resumo'];
+            if (texto) {
+                gerarPDF(texto);
+            } else {
+                // Caso não tenha gerado nada ainda
+                processarConteudo('resumo'); 
+            }
+        };
     } else {
-        btnBaixar.textContent = texto;
+        label.innerText = 'GERAR RESUMO';
+        btnResumo.onclick = () => {
+            processarConteudo('resumo'); // Função que inicia a geração
+        };
     }
 }
 
