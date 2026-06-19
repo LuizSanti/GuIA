@@ -1,0 +1,241 @@
+/* ==========================================================================
+   RESPONSIVIDADE — GuIA
+   Arquivo exclusivo de media queries.
+   Não sobrescreve estilos base — apenas adapta layout por breakpoint.
+
+   Breakpoints:
+     mobile  : até 767px   (360px mínimo garantido)
+     tablet  : 768px–1023px
+     desktop : 1024px+     (comportamento padrão já definido nos outros CSS)
+   ========================================================================== */
+
+/* ==========================================================================
+   MOBILE — até 767px
+   ========================================================================== */
+@media (max-width: 767px) {
+
+    /* ── Sidebar ──────────────────────────────────────────────────────────── */
+
+    /* No mobile a sidebar some e vira uma barra inferior de ícones */
+    .menu {
+        width: 100%;
+        height: 56px;
+        flex-direction: row;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        z-index: 200;
+        overflow: visible;
+        border-top: 1px solid var(--nav-border);
+    }
+
+    /* Anula o hover de expansão lateral */
+    .menu:hover { width: 100%; }
+
+    .menu > div {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0;
+        width: 100%;
+    }
+
+    /* Esconde logo e títulos de seção */
+    .logo,
+    .geral h2,
+    .conta h2 { display: none; }
+
+    /* Distribui os ícones horizontalmente */
+    .geral,
+    .conta {
+        border-top: none;
+        padding: 0;
+        flex: 1;
+    }
+
+    .geral ul,
+    .conta ul {
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 0;
+        gap: 0;
+    }
+
+    .geral ul li a,
+    .conta ul li a {
+        flex-direction: column;
+        gap: 2px;
+        padding: 6px 16px;
+        border-radius: 0;
+        justify-content: center;
+    }
+
+    /* Mostra o rótulo embaixo do ícone no mobile */
+    .nav-label {
+        opacity: 1;
+        font-size: 10px;
+    }
+
+    .menu:hover .nav-label { opacity: 1; }
+
+    /* ── Layout principal ────────────────────────────────────────────────── */
+
+    body { flex-direction: column; }
+
+    main {
+        width: 100%;
+        /* Espaço para a barra inferior */
+        padding-bottom: 56px;
+    }
+
+    .content-area {
+        padding: 16px;
+        gap: 16px;
+    }
+
+    /* ── Card base ───────────────────────────────────────────────────────── */
+
+    .card { padding: 20px 16px; }
+
+    /* ── Tela de upload ──────────────────────────────────────────────────── */
+
+    .upload-zone {
+        padding: 40px 16px;
+        gap: 16px;
+    }
+
+    .upload-logo-img { width: 72px; }
+
+    /* Botões de ação empilham verticalmente */
+    .action-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn-action {
+        width: 100%;
+        min-width: unset;
+    }
+
+    /* ── Tela de processamento ───────────────────────────────────────────── */
+
+    /* Desfaz o grid lado a lado — empilha verticalmente */
+    .card-split {
+        grid-template-columns: 1fr;
+    }
+
+    /* Esconde o preview do documento no mobile (ocupa espaço sem valor) */
+    .document-preview { display: none; }
+
+    /* ── Tela de resultados ──────────────────────────────────────────────── */
+
+    /* Desfaz o grid resultado + sidebar — empilha verticalmente */
+    .results-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+        gap: 24px;
+    }
+
+    .results-content {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding-right: 0;
+        padding-bottom: 24px;
+        height: auto;
+        max-height: 55vh;
+        overflow-y: auto;
+    }
+
+    .results-sidebar {
+        height: auto;
+        overflow-y: visible;
+    }
+
+    /* ── Chat ────────────────────────────────────────────────────────────── */
+
+    .chat-historico { max-height: 160px; }
+
+    .prompt-bar {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+        padding: 4px 8px 4px 12px;
+    }
+
+    .prompt-bar input { font-size: 14px; }
+
+    /* ── Tela de erro ────────────────────────────────────────────────────── */
+
+    .card-center { padding: 24px 16px; }
+
+    .error-footer {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* ── Histórico ───────────────────────────────────────────────────────── */
+
+    .historico-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .historico-item__acoes {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+    }
+
+    .historico-item__acoes .btn-action {
+        flex: 1;
+    }
+}
+
+/* ==========================================================================
+   TABLET — 768px a 1023px
+   ========================================================================== */
+@media (min-width: 768px) and (max-width: 1023px) {
+
+    .content-area { padding: 24px 20px; }
+
+    .card { padding: 28px 24px; }
+
+    /* Sidebar mantém comportamento de expansão mas começa um pouco maior */
+    .menu { width: 64px; }
+    .menu:hover { width: 200px; }
+
+    /* Upload: botões ainda em linha mas menores */
+    .btn-action {
+        min-width: 120px;
+        padding: 14px 12px;
+        font-size: 11px;
+    }
+
+    /* Resultados: sidebar um pouco mais estreita */
+    .results-layout {
+        grid-template-columns: 1fr 240px;
+        gap: 24px;
+    }
+
+    /* Processamento: mantém grid mas preview menor */
+    .card-split {
+        grid-template-columns: 1.4fr 0.6fr;
+    }
+}
+
+/* ==========================================================================
+   DESKTOP — 1024px+
+   Comportamento padrão já definido nos arquivos base.
+   Apenas ajustes pontuais de escala para telas muito grandes.
+   ========================================================================== */
+@media (min-width: 1440px) {
+
+    .content-area { padding: 48px 48px; }
+
+    .results-layout {
+        grid-template-columns: 1fr 320px;
+    }
+}

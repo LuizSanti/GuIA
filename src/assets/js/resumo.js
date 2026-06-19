@@ -1,12 +1,31 @@
 // [Sprint 2] US04 — Integração com API de IA: geração de conteúdo automático por chunks.
 // [Sprint 2] US05 — Geração de perguntas de revisão (acao: 'revisao')
 // [Sprint 3] US06 — Explicações simplificadas (acao: 'simplificar')
+// [Sprint 3] US24 — Timeout nas chamadas à API (30s)
+// [Sprint 3] US25 — Detecção de resposta vazia
 // Responsável: Rejane e Mariah
 
 'use strict';
 
-const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODELO  = 'llama-3.1-8b-instant';
+// Chama o proxy do servidor — a chave fica no .env do backend, nunca exposta.
+const API_URL = '/api/groq';
+const MODELO_PADRAO = 'llama-3.1-8b-instant';
+
+function obterModelo() {
+    return localStorage.getItem('guia_model') || MODELO_PADRAO;
+}
+
+function obterHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
+    const customKey = localStorage.getItem('guia_api_key');
+    if (customKey) {
+        headers['Authorization'] = `Bearer ${customKey}`;
+    }
+    return headers;
+}
+
+// Tempo máximo de espera por resposta da API (ms)
+const API_TIMEOUT_MS = 30000;
 
 const SYSTEM_PROMPT = `Você é um assistente especializado em análise de documentos acadêmicos.
 REGRAS OBRIGATÓRIAS — siga-as sem exceção:
@@ -16,11 +35,8 @@ REGRAS OBRIGATÓRIAS — siga-as sem exceção:
 4. Seja claro, objetivo e profissional.
 5. Use a formatação Markdown especificada no prompt: ## para títulos de seção, **texto** para negrito, • para listas.`;
 
-// [US04/US05/US06] Prompts por ação — todos com formatação rica para o PDF
 function montarPromptChunk(texto, acao) {
     const comandos = {
-
-        // ── US04 ────────────────────────────────────────────────────────────
         'resumo': `Com base EXCLUSIVAMENTE no texto abaixo, escreva um resumo detalhado em português brasileiro.
 Formate a saída EXATAMENTE assim (use estes marcadores, não outros):
 TÍTULO: <insira aqui o tema principal em maiúsculas>
@@ -79,8 +95,6 @@ em negrito -**Resposta:** texto da resposta.
 (continue para todas as perguntas relevantes)
 Use somente o que está no texto. Texto:`,
 
-        // ── US05 ────────────────────────────────────────────────────────────
-        // 5 perguntas de revisão numeradas, sem gabarito, baseadas no documento
         'revisao': `Com base EXCLUSIVAMENTE no texto abaixo, crie exatamente 5 perguntas de revisão em português brasileiro.
 Critérios:
 - Varie o nível: 2 perguntas simples (recall), 2 de compreensão, 1 de aplicação.
@@ -95,8 +109,6 @@ Formate a saída EXATAMENTE assim:
 **5.** Texto da quinta pergunta?
 Texto:`,
 
-        // ── US06 ────────────────────────────────────────────────────────────
-        // Reescreve em linguagem acessível, sem termos técnicos desnecessários
         'simplificar': `Com base EXCLUSIVAMENTE no texto abaixo, reescreva o conteúdo em linguagem simples e acessível em português brasileiro.
 Regras:
 - Substitua termos técnicos por explicações diretas (ex: "homeostase" → "equilíbrio do corpo").
@@ -116,69 +128,119 @@ Texto:`
     return `${cmd}\n\n"${texto}"`;
 }
 
-async function chamarAPI(promptUsuario, apiKey) {
+// ─── Fetch com timeout ────────────────────────────────────────────────────────
+//
+// Cria um AbortController e dispara um timer de API_TIMEOUT_MS.
+// Se a API não responder a tempo, o controller aborta o fetch,
+// o que lança um DOMException com name === 'AbortError'.
+// O chamador (chamarAPI) captura esse erro e relança como ErroGuIA
+// com tipo 'timeout', que o index.js traduz para mensagem amigável.
+
+async function fetchComTimeout(url, opcoes) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+    try {
+        const resposta = await fetch(url, { ...opcoes, signal: controller.signal });
+        return resposta;
+    } catch (erro) {
+        if (erro.name === 'AbortError') {
+            throw new ErroGuIA('timeout');
+        }
+        throw erro;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+// ─── Classe de erro tipado ────────────────────────────────────────────────────
+//
+// Permite que o index.js distinga o tipo de falha sem parsear strings.
+// Tipos possíveis: 'timeout' | 'resposta_vazia' | 'api' | 'desconhecido'
+
+class ErroGuIA extends Error {
+    constructor(tipo, detalhe = '') {
+        super(detalhe || tipo);
+        this.tipo   = tipo;
+        this.detalhe = detalhe;
+    }
+}
+
+// ─── Chamada principal à API ──────────────────────────────────────────────────
+
+async function chamarAPI(promptUsuario) {
     const payload = {
-        model: MODELO,
+        model: obterModelo(),
         messages: [
             { role: 'system', content: SYSTEM_PROMPT },
             { role: 'user',   content: promptUsuario  }
         ],
         temperature: 0.3,
-        max_tokens: 800  // aumentado para acomodar formatação rica e US05/US06
+        max_tokens: 800
     };
 
-    const resposta = await fetch(API_URL, {
+    const resposta = await fetchComTimeout(API_URL, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-        },
+        headers: obterHeaders(),
         body: JSON.stringify(payload)
     });
 
     if (!resposta.ok) {
-        const erroJson = await resposta.json();
-        throw new Error(`Erro Groq: ${erroJson.error?.message || resposta.statusText}`);
+        const erroJson = await resposta.json().catch(() => ({}));
+        throw new ErroGuIA('api', erroJson.error?.message || resposta.statusText);
     }
 
     const dados = await resposta.json();
-    return dados.choices[0].message.content;
+    const conteudo = dados.choices?.[0]?.message?.content?.trim();
+
+    // US25 — resposta vazia: API respondeu 200 mas não gerou texto útil
+    if (!conteudo) {
+        throw new ErroGuIA('resposta_vazia');
+    }
+
+    return conteudo;
 }
 
-// Chamada dedicada para o chat contextual (US08/US09) — sem prompt de formatação de documento
-async function chamarAPIChat(mensagens, apiKey) {
+// ─── Chamada dedicada para o chat contextual (US08/US09) ─────────────────────
+
+async function chamarAPIChat(mensagens) {
     const payload = {
-        model: MODELO,
+        model: obterModelo(),
         messages: mensagens,
         temperature: 0.4,
         max_tokens: 600
     };
 
-    const resposta = await fetch(API_URL, {
+    const resposta = await fetchComTimeout(API_URL, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-        },
+        headers: obterHeaders(),
         body: JSON.stringify(payload)
     });
 
     if (!resposta.ok) {
-        const erroJson = await resposta.json();
-        throw new Error(`Erro Groq: ${erroJson.error?.message || resposta.statusText}`);
+        const erroJson = await resposta.json().catch(() => ({}));
+        throw new ErroGuIA('api', erroJson.error?.message || resposta.statusText);
     }
 
     const dados = await resposta.json();
-    return dados.choices[0].message.content;
+    const conteudo = dados.choices?.[0]?.message?.content?.trim();
+
+    if (!conteudo) {
+        throw new ErroGuIA('resposta_vazia');
+    }
+
+    return conteudo;
 }
 
-async function gerarConteudoIA(chunks, apiKey, acao, { onProgresso } = {}) {
+// ─── Geração de conteúdo por chunks ──────────────────────────────────────────
+
+async function gerarConteudoIA(chunks, acao, { onProgresso } = {}) {
     const resultadosParciais = [];
 
     for (let i = 0; i < chunks.length; i++) {
         if (onProgresso) onProgresso(i + 1, chunks.length);
-        const prompt   = montarPromptChunk(chunks[i], acao);
-        const resultado = await chamarAPI(prompt, apiKey);
+        const prompt    = montarPromptChunk(chunks[i], acao);
+        const resultado = await chamarAPI(prompt);
         resultadosParciais.push(resultado);
     }
 
@@ -188,8 +250,7 @@ async function gerarConteudoIA(chunks, apiKey, acao, { onProgresso } = {}) {
             `Consolide os trechos abaixo em um único resultado coeso em português brasileiro.\n` +
             `Mantenha toda a formatação Markdown (##, **, •) presente nos trechos.\n` +
             `Use APENAS as informações presentes nos trechos. Não adicione nada externo.\n\n` +
-            resultadosParciais.join('\n\n'),
-            apiKey
+            resultadosParciais.join('\n\n')
           );
 
     return { resultadoFinal };
